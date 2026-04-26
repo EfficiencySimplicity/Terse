@@ -23,15 +23,16 @@ You open your browser, type in your question, and load up a whole react-based we
 <div align="center">
 
 <h2> Usage </h2>
+<h3> WARNING: All this is theoretical, but a good roadmap for the functionality </h3>
 
 </div>
 
-Once you have TerminalSearch installed, type in ```ts init``` and enter in the following information (only necessary if you want to publish Answers):
+Once you have TerminalSearch installed, type in ```ts --init``` and enter in the following information (only necessary if you want to publish Answers):
 <!-- What about rate limiting? What about so-and so?... ah well for now, it's OK. -->
 
 ```shell
 
-~$ ts init
+~$ ts --init
 
 Enter your nickname and email
 Email: 
@@ -69,7 +70,7 @@ Python:
     f"number a: {a}; number b: {b}"
 
 C#:
-    $"number a: {a}; number b: {b}"
+    $"number a: {a}; number b: {b}" or
     String.Format("number a: {a}; number b: {b}", a, b)
 
 JS: 
@@ -77,11 +78,11 @@ JS:
 ...
 ```
 
-To get info about a specific user, type in ts who [username]:
+To get info about a specific user, type in ts --who [username]:
 
 ```shell
 
-~$ ts who pythonwranglers
+~$ ts --who pythonwranglers
 
 pythonwranglers (354)
 pythonsquad@hotmail.com
@@ -102,8 +103,8 @@ by pythonwranglers (354) at 1/12/2025
 
 <!-- https://www.linkedin.com/pulse/git-identity-paradox-why-your-commit-email-isnt-always-amit-kumar-eeh5f ??! We must do better? How do we verify email at all?! -->
 
-To publish your own answers, use ```ts pub "Answer Name Goes Here" path/to/answer.txt```
-You can only publish .txt files, with links embeddable
+To publish your own answers, use ```ts --pub "Answer Name Goes Here" path/to/answer.txt```
+You can only publish .txt files, with links embeddable.
 <!-- TODO: ...via [text](link) but how displayed? how linkable? and of course you should be able to escape those characters -->
 
 <!-- TODO: No idea how reasonable this is; maybe do byte size? -->
@@ -111,7 +112,7 @@ The max number of characters is 32768, forcing answers to be brief, succinct, an
 with maybe a little room for humor, too.
 
 ```shell
-ts pub "Traits in Rust - Deep Dive" /answers/traits-in-rust.txt
+ts --pub "Traits in Rust - Deep Dive" /answers/traits-in-rust.txt
 
 Publishing...
 Successfully published:
@@ -122,6 +123,9 @@ by Johnny McCool on 4/10/2026
 
 
 <!-- TODO: likes, followers? some sort of (transparent) algorithm to rank 'em, a --help sorta thing (which of course leads to an Answer in Ts), more detailed instructions than the README
+
+Also ts --edit "title" path-to-file
+Also comments! comments are good! so you could ask questions as opposed to answers...
 
 Also you could go; for adding ratings to articles;
 
