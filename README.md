@@ -1,10 +1,10 @@
 <div align="center">
 
-<h1> TerminalSearch </h1>
+<h1> Terse </h1>
 
 </div>
 
-TerminalSearch is a minimalistic, lightweight and direct terminal search engine. It is designed to give you direct answers to programming questions as quick and bloat-free as possible
+Terse is a minimalistic, lightweight and direct terminal search engine. It is designed to give you answers to programming questions as quick and bloat-free as possible
 
 <div align="center">
 <!-- TODO: better title -->
@@ -18,7 +18,7 @@ You open your browser, type in your question, and load up a whole react-based we
 
 *some* will even ask a bot, and set in motion billions of tensor operations in a noisy datacenter to generate each individual word of *how to center a div for the ten thousandth time because you can't bother to remember*.
 
-**TerminalSearch gets rid of all this bloat**. You ask a question, you get an answer, right in your teminal. Simple as that. Everything's plain-text, small, and direct, written by developers like you.
+**Terse gets rid of all this bloat**. You ask a question, you get an answer, right in your terminal. Simple as that. Everything's plain-text, small, and direct, written by developers like you.
 
 <div align="center">
 
@@ -27,7 +27,7 @@ You open your browser, type in your question, and load up a whole react-based we
 
 </div>
 
-Once you have TerminalSearch installed, type in ```ts --init``` and enter in the following information (only necessary if you want to publish Answers):
+Once you have Terse installed, type in ```ts --init``` and enter in the following information (only necessary if you want to publish Answers):
 <!-- What about rate limiting? What about so-and so?... ah well for now, it's OK. -->
 
 ```shell
@@ -138,5 +138,5 @@ Also you could go; for adding ratings to articles;
 3: Formatting Strings in Python - In-Depth (235)
    by pythonwranglers (354) at 1/12/2025
 
-Also a way to follow links... Like the links in Ts should just be an ID, not like an actual link; things should be easy to link to in, say, markdown files / a ts go command? ts go 32203948, for example, for a quick thing you gotta remember?... and in text, you prefix it with https://terminalsearch.com/answers?id={id}
+Also a way to follow links... Like the links in Ts should just be an ID, not like an actual link; things should be easy to link to in, say, markdown files / a ts go command? ts go 32203948, for example, for a quick thing you gotta remember?... and in text, you prefix it with https://Terse.com/answers?id={id}
 -->

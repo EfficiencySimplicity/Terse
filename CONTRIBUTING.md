@@ -1,4 +1,4 @@
-# Contributing to TerminalSearch
+# Contributing to Terse
 
 **First off, a quick and easy way to help the project is to simply tell more people about it, via any means you see fit. Share it, mention it, make things that integrate with it, any little bit helps.**
 
@@ -10,7 +10,7 @@ That outta the way:
 
 ### 1. NO AI
 
-Not for coding, not for publishing Answers, not for anything related to this project. No exceptions. We value human quality, not quantity, here.
+Not for coding, not for publishing Answers, not for anything related to this project. No exceptions. We value human quality, not quantity here.
 
 ### 2. Keep it simple
 
