@@ -20,5 +20,8 @@ Make your code as simple as possible to understand and maintain. Keep it minimal
 
 When you have to look something, *anything* up, even if it's something so trivial everyone else but you probably knows it, or its something you knew, and then forgot, **comment the link**. It'll help out the next person down the line and give context. (Needless to say, AI is not a source. But you knew that already, having read rule 1)
 
+### 4. Comments
 
-As for comments, comments are for explaining *why*, not *how*; I recommend you read [this article on writing good comments](https://alexkondov.com/comments-the-good-the-bad-the-ugly/)
+The standard is to use ```// NOTE:``` for ideas / possible changes, and ```// TODO:``` for things that should be added; this allows easy searching for / auto-indexing changes that should be made
+
+As for other comments, comments are for explaining *why*, not *how*; I recommend you read [this article on writing good comments](https://alexkondov.com/comments-the-good-the-bad-the-ugly/)
