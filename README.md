@@ -22,6 +22,24 @@ You open your browser, type in your question, and load up a whole react-based we
 
 <div align="center">
 
+<h2> Why use Terse? </h2>
+
+</div>
+
+### Terse is fast
+
+Written in the Rust language, with no rendering of HTML, no background processes running, nothing but plain-text answers to your plain-text questions
+
+### No distractions
+
+There's no ads, no banners asking you to donate, <!--You do that on the github-->no tabs everywhere trying to get you to click, no extra fluff obscuring the actual answer, no getting distracted and hopping on social media, either. Just direct flow between you and the answers you need.
+
+### Terse is lightweight
+
+No worrying about "bandwidth" or "tokens"; Terse is the bare minimum, and all you need.
+
+<div align="center">
+
 <h2> Usage </h2>
 <h3> WARNING: All this is theoretical, but a good roadmap for the functionality </h3>
 

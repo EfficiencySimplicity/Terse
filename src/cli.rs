@@ -9,13 +9,15 @@ pub enum Cli {
 #[derive(Parser, Debug)]
 pub struct CommandsCli {
     #[command(subcommand)]
-    command: Commands
+    pub command: Commands
 }
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum Commands {
     #[command(name = "--stats")]
     Stats,
+    #[command(name = "--getpost")]
+    GetPost,
     #[command(name = "--pub")]
     Pub,
     #[command(name = "--signup")]

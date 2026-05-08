@@ -14,7 +14,7 @@ fn get_cli(args: Args) -> Cli {
     if let Some(command) = std::env::args().nth(1) {
         // https://pythonexamples.org/rust/how-to-get-first-n-characters-in-string
         // https://www.dotnetperls.com/starts-with-rust
-        if command.starts_with("--") {
+        if command.starts_with("-") {
             return Cli::Commands(CommandsCli::parse())
         }
     }

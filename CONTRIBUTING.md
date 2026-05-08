@@ -1,3 +1,5 @@
+<!-- TODO: link to this thing in the Terse-server repo -->
+
 # Contributing to Terse
 
 **First off, a quick and easy way to help the project is to simply tell more people about it, via any means you see fit. Share it, mention it, make things that integrate with it, any little bit helps.**
@@ -22,6 +24,6 @@ When you have to look something, *anything* up, even if it's something so trivia
 
 ### 4. Comments
 
-The standard is to use ```// NOTE:``` for ideas / possible changes, and ```// TODO:``` for things that should be added; this allows easy searching for / auto-indexing changes that should be made
+The standard is to use ```// NOTE:``` for things you should be notified of,````// IDEA:```` for ideas / possible changes, and ```// TODO:``` for things that should be added in the future; this allows easy searching for / auto-indexing changes that should be made
 
 As for other comments, comments are for explaining *why*, not *how*; I recommend you read [this article on writing good comments](https://alexkondov.com/comments-the-good-the-bad-the-ugly/)
