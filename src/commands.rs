@@ -10,7 +10,7 @@ pub fn run_commands(command: CommandsCli) {
         Commands::Stats => display_stats(),
         // TODO: This should not even be a command, maybe later
         Commands::GetPost{ id } => display_post(id),
-        Commands::AddPost{ title, content } => try_add_post(title, content),
+        Commands::Pub{ title, content } => try_publish(title, content),
         _ => {}
     }
 }
@@ -84,7 +84,7 @@ fn display_post(id: i32) {
     }
 }
 
-fn try_add_post(title: String, content: String) {
+fn try_publish(title: String, content: String) {
     let x = add_post(title, content);
 }
 

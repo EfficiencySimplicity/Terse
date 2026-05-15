@@ -19,9 +19,7 @@ pub enum Commands {
     #[command(name = "--getpost")]
     GetPost {id: i32},
     #[command(name = "--pub")]
-    Pub,// IS addPost
-    #[command(name = "--post")]
-    AddPost {title: String, content: String},
+    Pub {title: String, content: String},// IS addPost
     #[command(name = "--signup")]
     Signup,
 }
