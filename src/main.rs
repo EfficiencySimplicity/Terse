@@ -7,6 +7,8 @@ use queries::*;
 pub mod commands;
 use commands::*;
 
+pub mod stats;
+
 use std::env::Args;
 use clap::Parser;
 
