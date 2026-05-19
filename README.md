@@ -1,10 +1,11 @@
 <div align="center">
 
 <h1> Terse </h1>
+<h2> ⚠️ WARNING: Terse is still in-dev and most features listed here are theoretical, but planned to be added ⚠️ </h2>
 
 </div>
 
-Terse is a minimalistic, lightweight and direct terminal search engine. It is designed to give you answers to programming questions as quick and bloat-free as possible
+Terse is a minimalistic, lightweight and direct terminal search engine. It is designed to give you answers to programming questions directly in the terminal as quick and bloat-free as possible
 
 <div align="center">
 <!-- TODO: better title -->
@@ -38,15 +39,15 @@ There's no ads, no banners asking you to donate, <!--You do that on the github--
 
 No worrying about "bandwidth" or "tokens"; Terse is the bare minimum, and all you need.
 
-<div align="center">
+<!-- <div align="center">
 
 <h2> Usage </h2>
-<h3> WARNING: All this is theoretical, but a good roadmap for the functionality </h3>
+<h3> ⚠️ WARNING: All this is theoretical, but a good roadmap for the functionality ⚠️ </h3>
 
 </div>
 
-Once you have Terse installed, type in ```ts --init``` and enter in the following information (only necessary if you want to publish Answers):
-<!-- What about rate limiting? What about so-and so?... ah well for now, it's OK. -->
+<!-- Once you have Terse installed, type in ```ts --init``` and enter in the following information (only necessary if you want to publish Answers):
+<!-- What about rate limiting? What about so-and so?... ah well for now, it's OK.
 
 ```shell
 
@@ -57,9 +58,9 @@ Email:
  bob@example.com
 Nickname (max 16 chars):
  Johnny McCool
-```
+``` 
 
-Now to search for something, type in ```ts``` followed by your question / keywords:
+To search for something, type in ```ts``` followed by your question / keywords:
 
 ```shell
 
@@ -76,11 +77,11 @@ by kevinwright (2k) at 3/14/2026
 ...
 ```
 
-<!-- TODO: find other shortcuts -->
-You can scroll up or down using the arrow keys, and enter a number to 
-open the answer corresponding to it.
+<!-- TODO: find other shortcuts 
+<!-- You can scroll up or down using the arrow keys, and enter a number to 
+open the answer corresponding to it. 
 
-<!-- https://www.c-sharpcorner.com/uploadfile/mahesh/format-string-in-C-Sharp/ -->
+<!-- https://www.c-sharpcorner.com/uploadfile/mahesh/format-string-in-C-Sharp/ 
 ```shell
 String Formatting Cheatsheet - All Languages
 
@@ -119,13 +120,13 @@ by pythonwranglers (354) at 1/12/2025
 ...
 ```
 
-<!-- https://www.linkedin.com/pulse/git-identity-paradox-why-your-commit-email-isnt-always-amit-kumar-eeh5f ??! We must do better? How do we verify email at all?! -->
+<!-- https://www.linkedin.com/pulse/git-identity-paradox-why-your-commit-email-isnt-always-amit-kumar-eeh5f ??! We must do better? How do we verify email at all?!
 
 To publish your own answers, use ```ts --pub "Answer Name Goes Here" path/to/answer.txt```
 You can only publish .txt files, with links embeddable.
-<!-- TODO: ...via [text](link) but how displayed? how linkable? and of course you should be able to escape those characters -->
+<!-- TODO: ...via [text](link) but how displayed? how linkable? and of course you should be able to escape those characters
 
-<!-- TODO: No idea how reasonable this is; maybe do byte size? -->
+<!-- TODO: No idea how reasonable this is; maybe do byte size?
 The max number of characters is 32768, forcing answers to be brief, succinct, and direct, 
 with maybe a little room for humor, too.
 
@@ -137,7 +138,7 @@ Successfully published:
 
 Traits in Rust - Deep Dive 
 by Johnny McCool on 4/10/2026
-```
+``` -->
 
 
 <!-- TODO: likes, followers? some sort of (transparent) algorithm to rank 'em, a --help sorta thing (which of course leads to an Answer in Ts), more detailed instructions than the README

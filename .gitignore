@@ -19,3 +19,6 @@ target/
 # Added by cargo
 
 /target
+
+# Not in use yet!
+CONTRIBUTING.md

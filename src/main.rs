@@ -4,10 +4,8 @@ use crate::cli::*;
 pub mod queries;
 use queries::*;
 
-pub mod commands;
-use commands::*;
-
 pub mod stats;
+pub mod posts;
 
 use std::env::Args;
 use clap::Parser;

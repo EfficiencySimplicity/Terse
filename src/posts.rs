@@ -1,28 +1,9 @@
-use crate::cli::*;
 use serde::{ Serialize, Deserialize };
 use reqwest::{Error};
 use bytesize::ByteSize;
 use std::fmt::Formatter;
 use std::fmt::Display;
 use indoc::writedoc;
-use crate::stats::*;
-
-// TODO: use the directories crate to set the server.
-// and a localhost flag -l for easy no-type-full-url
-
-// TODO: make indentation of size error correct
-
-// 1 kb, and cli.rs goes ok, but commands.rs fails
-
-pub fn run_commands(command: CommandsCli) {
-    match command.command {
-        Commands::Stats => display_stats(),
-        // TODO: This should not even be a command, maybe later
-        Commands::GetPost{ id } => display_post(id),
-        Commands::Pub{ title, path } => try_publish(title, path),
-        _ => {}
-    }
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct Post {
@@ -37,7 +18,7 @@ pub fn get_post(id: i32) -> Result<Post, Error> {
     return Ok(post);
 }
 
-fn display_post(id: i32) {
+pub fn display_post(id: i32) {
     let res = get_post(id);
     
     match res {
@@ -54,7 +35,7 @@ fn display_post(id: i32) {
     }
 }
 
-fn try_publish(title: String, path: String) {
+pub fn try_publish(title: String, path: String) {
     let content = std::fs::read_to_string(&path);
 
     match content {
