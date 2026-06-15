@@ -1,33 +1,18 @@
 pub mod cli;
-use crate::cli::*;
-
-pub mod queries;
-use queries::*;
+use cli::*;
 
 pub mod stats;
 pub mod posts;
+pub mod tui;
 
-use std::env::Args;
-use clap::Parser;
-
-fn get_cli(args: Args) -> Cli {
-    if let Some(command) = std::env::args().nth(1) {
-        // https://pythonexamples.org/rust/how-to-get-first-n-characters-in-string
-        // https://www.dotnetperls.com/starts-with-rust
-        if command.starts_with("-") {
-            return Cli::Commands(CommandsCli::parse())
-        }
-    }
-
-    return Cli::Query(QueryCli::parse())
-}
+pub mod queries;
+use queries::api::*;
 
 fn main() {
-    let cli = get_cli(std::env::args());
-    println!("{:?}", cli);
+    let cli = get_cli();
 
     match cli {
-        Cli::Query(cli) => run_query_app(cli.query),
-        Cli::Commands(cli) => run_commands(cli),
+        Cli::Query(cli) => process_query(cli.query),
+        Cli::Commands(cli) => process_command(cli),
     }
 }

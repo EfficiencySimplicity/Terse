@@ -5,7 +5,7 @@ use std::fmt::Formatter;
 use std::fmt::Display;
 use indoc::writedoc;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Post {
     title: String,
     content: String,
@@ -40,7 +40,7 @@ pub fn try_publish(title: String, path: String) {
 
     match content {
         Ok(content) => {let _ = add_post(title, content);}
-        Err(e) => println!("Could not read file at {path}")
+        Err(_) => println!("Could not read file at {path}")
     }
 }
 

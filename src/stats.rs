@@ -1,4 +1,4 @@
-use serde::{ Serialize, Deserialize };
+use serde::{ Deserialize };
 use reqwest::{Error};
 use bytesize::ByteSize;
 

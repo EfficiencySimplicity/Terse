@@ -2,6 +2,18 @@ use clap::{Parser, Subcommand};
 use crate::stats::*;
 use crate::posts::*;
 
+pub fn get_cli() -> Cli {
+    if let Some(command) = std::env::args().nth(1) {
+        // https://pythonexamples.org/rust/how-to-get-first-n-characters-in-string
+        // https://www.dotnetperls.com/starts-with-rust
+        if command.starts_with("-") {
+            return Cli::Commands(CommandsCli::parse())
+        }
+    }
+
+    return Cli::Query(QueryCli::parse())
+}
+
 // I manually detect which Cli to parse with and return it in this enum
 #[derive(Debug)]
 pub enum Cli {
@@ -34,7 +46,7 @@ pub struct QueryCli {
     pub query: Vec<String>,
 }
 
-pub fn run_commands(command: CommandsCli) {
+pub fn process_command(command: CommandsCli) {
     match command.command {
         Commands::Stats => display_stats(),
         // TODO: This should not even be a command, maybe later
