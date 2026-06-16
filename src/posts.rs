@@ -4,21 +4,24 @@ use bytesize::ByteSize;
 use std::fmt::Formatter;
 use std::fmt::Display;
 use indoc::writedoc;
+use crate::tui::Window;
+use ratatui::{layout::Rect, buffer::Buffer, widgets::{Widget, ScrollbarState, Paragraph}};
+use crossterm::event::KeyCode;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Post {
-    title: String,
-    content: String,
+    pub title: String,
+    pub content: String,
 }
 
-pub fn get_post(id: i32) -> Result<Post, Error> {
+pub fn get_post(id: u16) -> Result<Post, Error> {
     let post = reqwest::blocking::get(format!("http://localhost:3000/posts?id={id}"))?
     .json::<Post>()?;
 
     return Ok(post);
 }
 
-pub fn display_post(id: i32) {
+pub fn display_post(id: u16) {
     let res = get_post(id);
     
     match res {
@@ -89,4 +92,34 @@ fn add_post(title: String, content: String) -> Result<(), Box<dyn std::error::Er
         Err(err) => println!("Error in sending post: {err}")
     }
     Ok(())
+}
+
+pub struct PostWidget {
+    post: Post,
+    scroll_state: ScrollbarState,
+}
+
+impl PostWidget {
+    pub fn new(post: Post) -> Self {
+        Self {post, scroll_state: ScrollbarState::new(100)}
+    }
+}
+
+impl Widget for &mut PostWidget {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        // TODO: eliminate this clone() by any means necessary.
+        Paragraph::new(self.post.content.clone())
+        .scroll((self.scroll_state.get_position() as u16, 0))
+        .render(area, buf)
+    }
+}
+
+impl Window for PostWidget {
+    fn handle_key_event(&mut self, key: KeyCode) {
+        match key {
+            KeyCode::Char('j') => {self.scroll_state.next()}
+            KeyCode::Char('k') => {self.scroll_state.prev()}
+            _ => {}
+        }
+    }
 }

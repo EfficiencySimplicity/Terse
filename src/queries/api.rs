@@ -8,7 +8,8 @@ use crate::queries::tui::*;
 // TODO: age (in case the link gets invalidated between searching and entering)
 #[derive(Deserialize, Debug)]
 pub struct SearchResult {
-    title: String,
+    pub title: String,
+    pub postid: u16,
 }
 
 // https://www.reddit.com/r/rust/comments/7zm0j2/intofrom_for_nonconsuming_conversions/

@@ -11,6 +11,7 @@ use queries::api::*;
 fn main() {
     let cli = get_cli();
 
+    // TODO: this code, in the CLI; cli::process()
     match cli {
         Cli::Query(cli) => process_query(cli.query),
         Cli::Commands(cli) => process_command(cli),
