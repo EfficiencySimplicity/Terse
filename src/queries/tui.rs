@@ -1,6 +1,6 @@
 use crate::queries::api::*;
 use crate::tui::*;
-use crate::posts::{Post, get_post};
+use crate::{posts::{Post, get_post}, tui::get_default_block};
 use reqwest::{Error};
 use crate::tui::Window;
 use crate::posts::PostWidget;
@@ -10,7 +10,7 @@ use ratatui::{
     layout::Rect,
     style::Modifier,
     style::Style,
-    widgets::{Block, BorderType, List, ListState, StatefulWidget, Widget},
+    widgets::{Block, List, ListState, StatefulWidget, Widget},
 };
 
 use crossterm::event::KeyCode;
@@ -39,10 +39,8 @@ impl Widget for &mut SearchResults {
     fn render(self, area: Rect, buf: &mut Buffer) {
         // inner is inside the block, not the whole magic scrollview buffer...
 
-        let container = Block::bordered()
-            .border_type(BorderType::HeavyQuadrupleDashed)
-            .border_style(Style::new().white().on_white())
-            .title_bottom("( (j / k) + enter) or (id) to select");
+        let container = get_default_block()
+            .title_bottom("( ((j / k) + enter) or (id) to select )");
 
         StatefulWidget::render(
             List::new(&self.links)
@@ -86,9 +84,16 @@ impl SearchMenu {
 
 impl Widget for &mut SearchMenu {
     fn render(self, area: Rect, buf: &mut Buffer) {
+    
         match &mut self.mode {
             SearchMenuMode::Results => {self.results.render(area, buf)}
-            SearchMenuMode::Answer(p) => p.render(area, buf)
+            SearchMenuMode::Answer(p) => {
+                let container = get_default_block().title_bottom("( b to go back )");
+                let inner = container.inner(area);
+
+                container.render(area, buf);
+                p.render(inner, buf);
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 use ratatui::{
     DefaultTerminal,
-    widgets::Widget,
+    widgets::{Widget, Block, BorderType},
 };
 
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -34,4 +34,10 @@ impl App {
 
 pub trait Window {
     fn handle_key_event(&mut self, key: KeyCode);
+}
+
+pub fn get_default_block<'a>() -> Block<'a> {
+    return Block::bordered()
+        .border_type(BorderType::Rounded)
+        //.border_style(Style::new().white().on_white())
 }
