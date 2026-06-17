@@ -16,7 +16,8 @@ fn main() {
     // a different module, and this logic must be somewhere,
     // Why not in main.rs???
     match cli {
-        Cli::Query(query_cli) => process_query(query_cli.query),
-        Cli::Commands(commands_cli) => commands_cli.process(),
+        Cli::Query(query) => process_query(query.words),
+        _ => println!("AAAA")
+        //Cli::Commands(commands_cli) => commands_cli.process(),
     }
 }
