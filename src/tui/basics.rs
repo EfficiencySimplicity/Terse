@@ -11,7 +11,11 @@ pub struct App {
 }
 
 impl App {
-    pub fn run<T: Window>(&mut self, terminal: &mut DefaultTerminal, window: &mut T) -> Result<(), std::io::Error> where for<'a> &'a mut T: Widget {
+    pub fn run<T: Window>(&mut self, window: &mut T) -> Result<(), std::io::Error> where for<'a> &'a mut T: Widget {
+        ratatui::run(|terminal| self.run_loop(terminal, window))
+    }
+
+    pub fn run_loop<T: Window>(&mut self, terminal: &mut DefaultTerminal, window: &mut T) -> Result<(), std::io::Error> where for<'a> &'a mut T: Widget {
         while !self.exit {
             terminal.draw(|frame| {
                 // https://stackoverflow.com/questions/30026893/how-to-use-a-map-over-vectors#30026986

@@ -1,16 +1,13 @@
 use crate::queries::api::*;
-use crate::tui::*;
 use crate::{posts::{Post, get_post}, tui::get_default_block};
 use reqwest::{Error};
-use crate::tui::Window;
-use crate::posts::PostWidget;
+use crate::tui::{App, Window, PostWidget};
 
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
     style::Modifier,
-    style::Style,
-    widgets::{Block, List, ListState, StatefulWidget, Widget},
+    widgets::{List, ListState, StatefulWidget, Widget},
 };
 
 use crossterm::event::KeyCode;
@@ -124,5 +121,6 @@ impl Window for SearchMenu {
 }
 
 pub fn run_tui(results: Vec<SearchResult>) {
-    ratatui::run(|terminal| App::default().run(terminal, &mut SearchMenu::new(SearchResults::new(results))));
+    // TODO: handle error
+    let _ = App::default().run(&mut SearchMenu::new(SearchResults::new(results)));
 }

@@ -9,11 +9,14 @@ pub mod queries;
 use queries::api::*;
 
 fn main() {
-    let cli = get_cli();
+    let cli = Cli::from_args();
 
     // TODO: this code, in the CLI; cli::process()
+    // or leave it here?. . . I mean, yea, each processor is in
+    // a different module, and this logic must be somewhere,
+    // Why not in main.rs???
     match cli {
-        Cli::Query(cli) => process_query(cli.query),
-        Cli::Commands(cli) => process_command(cli),
+        Cli::Query(query_cli) => process_query(query_cli.query),
+        Cli::Commands(commands_cli) => commands_cli.process(),
     }
 }

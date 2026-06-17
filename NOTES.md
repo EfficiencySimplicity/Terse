@@ -3,3 +3,6 @@
 
 - Module structure module structure module structure
     - Having, say, all this Post stuff in a single file is unideal; but what, a pub file, a Post file? all in a mod? What names do I give these files is the question? Two hard problems, amirite?
+
+- Docs README claims that these are effectively the man pages. How do you integrate them to be actual man pages?...
+    - I want Terse's help to be actually human-readable...
