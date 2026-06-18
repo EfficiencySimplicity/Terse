@@ -10,7 +10,7 @@ pub struct Server {
 impl Server {
     pub fn get_post(&self, id: u16) -> Result<Post, Error> {
         // https://docs.rs/url/latest/url/struct.Url.html#method.parse_with_params
-        let post = reqwest::blocking::get(
+        reqwest::blocking::get(
             // Maybe not the most efficient, re-parsing, but it's negligible
             // (Because url::Urls ain't mut, or don't seem to be)
             Url::parse_with_params(
@@ -18,8 +18,6 @@ impl Server {
                 [("id", id)]
             )
         );?
-        .json::<Post>()?;
-
-        return Ok(post);
+        .json::<Post>()
     }
 }
