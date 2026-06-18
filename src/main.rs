@@ -4,6 +4,7 @@ use cli::*;
 pub mod stats;
 pub mod posts;
 pub mod tui;
+pub mod server;
 
 pub mod queries;
 use queries::api::*;

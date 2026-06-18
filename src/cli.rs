@@ -1,6 +1,4 @@
-use clap::{Parser, Subcommand, Args};
-use crate::stats::*;
-use crate::posts::*;
+use clap::{Parser, Args};
 
 // https://docs.rs/clap/latest/clap/_derive/
 
