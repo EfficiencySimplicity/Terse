@@ -1,4 +1,4 @@
-use crate::{posts::{Post, get_post}, tui::get_default_block, server::{Server, SearchResult}};
+use crate::{posts::{Post, get_post}, tui::get_default_block, network::{Server, SearchResult}};
 use reqwest::{Error};
 use crate::tui::{App, Window, PostWidget};
 use url::Url;

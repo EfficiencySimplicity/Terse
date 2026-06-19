@@ -1,4 +1,4 @@
-use crate::server::Server;
+use crate::network::Server;
 
 use serde::Deserialize;
 use anyhow::Error;
