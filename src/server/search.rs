@@ -1,5 +1,4 @@
 use crate::server::Server;
-use crate::posts::Post;
 
 use serde::Deserialize;
 use anyhow::Error;
@@ -27,7 +26,7 @@ impl<'a> From<&'a SearchResult> for Text<'a> {
 }
 
 impl Server {
-    fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
+    pub fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
         Ok(
             reqwest::blocking::get(
                 // Maybe not the most efficient, re-parsing, but it's negligible

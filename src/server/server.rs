@@ -16,6 +16,11 @@ pub struct Server {
 
 impl Server {
 
+    pub fn new(url: Url) -> Self {
+        Self {url}
+    }
+
+    // TODO: clean this up
     pub(super) fn with_params<I, K, V>(&self, params: I) -> Result<Url, Error>
     where
         I: IntoIterator,
@@ -24,6 +29,7 @@ impl Server {
         V: AsRef<str>
     {
         Ok(
+            // https://docs.rs/url/latest/url/struct.Url.html#method.parse_with_params
             Url::parse_with_params(
                 self.url.as_str(),
                 params
@@ -33,15 +39,9 @@ impl Server {
 
     pub fn get_post(&self, id: u16) -> Result<Post, Error> {
         // https://docs.rs/url/latest/url/struct.Url.html#method.parse_with_params
-        // TODO: change!
         Ok(
             reqwest::blocking::get(
-                // Maybe not the most efficient, re-parsing, but it's negligible
-                // (Because url::Urls ain't mut, or don't seem to be)
-                Url::parse_with_params(
-                    self.url.as_str(),
-                    [("id", id.to_string())]
-                )?
+                self.with_params([("id", id.to_string())])?
             )?
             .json::<Post>()?
         )

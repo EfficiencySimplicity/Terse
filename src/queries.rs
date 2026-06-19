@@ -1,7 +1,6 @@
 use crate::{posts::{Post, get_post}, tui::get_default_block, server::{Server, SearchResult}};
 use reqwest::{Error};
 use crate::tui::{App, Window, PostWidget};
-use serde::Deserialize;
 use url::Url;
 
 use ratatui::{
@@ -123,11 +122,11 @@ impl Window for SearchMenu {
 
 // NOTE: Query?...
 pub fn process_query(query: Vec<String>) {
-    let server = Server {url: Url::parse("https://localhost:3000").unwrap()};
+    let server = Server::new(Url::parse("https://localhost:3000").unwrap());
     let results = server.search(query);
 
     match results {
-        Ok(r) => App::default().run(&mut SearchMenu::new(SearchResults::new(r))),
+        Ok(r) => {_ = App::default().run(&mut SearchMenu::new(SearchResults::new(r)))}
         _ => {}
     }
 }
