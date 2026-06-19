@@ -1,13 +1,12 @@
 pub mod cli;
 use cli::*;
 
-pub mod stats;
 pub mod posts;
 pub mod tui;
 pub mod server;
 
 pub mod queries;
-use queries::api::*;
+use queries::*;
 
 fn main() {
     let cli = Cli::from_args();

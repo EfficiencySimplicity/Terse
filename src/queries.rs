@@ -1,7 +1,8 @@
-use crate::queries::api::*;
-use crate::{posts::{Post, get_post}, tui::get_default_block};
+use crate::{posts::{Post, get_post}, tui::get_default_block, server::{Server, SearchResult}};
 use reqwest::{Error};
 use crate::tui::{App, Window, PostWidget};
+use serde::Deserialize;
+use url::Url;
 
 use ratatui::{
     buffer::Buffer,
@@ -120,7 +121,13 @@ impl Window for SearchMenu {
     }
 }
 
-pub fn run_tui(results: Vec<SearchResult>) {
-    // TODO: handle error
-    let _ = App::default().run(&mut SearchMenu::new(SearchResults::new(results)));
+// NOTE: Query?...
+pub fn process_query(query: Vec<String>) {
+    let server = Server {url: Url::parse("https://localhost:3000").unwrap()};
+    let results = server.search(query);
+
+    match results {
+        Ok(r) => App::default().run(&mut SearchMenu::new(SearchResults::new(r))),
+        _ => {}
+    }
 }
