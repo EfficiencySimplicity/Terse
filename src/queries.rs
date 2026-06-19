@@ -122,11 +122,11 @@ impl Window for SearchMenu {
 
 // NOTE: Query?...
 pub fn process_query(query: Vec<String>) {
-    let server = Server::new(Url::parse("https://localhost:3000").unwrap());
+    let server = Server::new(Url::parse("http://localhost:3000").unwrap());
     let results = server.search(query);
 
     match results {
-        Ok(r) => {_ = App::default().run(&mut SearchMenu::new(SearchResults::new(r)))}
-        _ => {}
+        Ok(r) => {App::default().run(&mut SearchMenu::new(SearchResults::new(r))).unwrap()}
+        Err(e) => {println!("Error: {e}")}
     }
 }

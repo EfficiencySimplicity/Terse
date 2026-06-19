@@ -21,7 +21,7 @@ impl Server {
     }
 
     // TODO: clean this up
-    pub(super) fn with_params<I, K, V>(&self, params: I) -> Result<Url, Error>
+    pub(super) fn with_params<I, K, V>(&self, route: &str, params: I) -> Result<Url, Error>
     where
         I: IntoIterator,
         I::Item: Borrow<(K, V)>,
@@ -31,7 +31,8 @@ impl Server {
         Ok(
             // https://docs.rs/url/latest/url/struct.Url.html#method.parse_with_params
             Url::parse_with_params(
-                self.url.as_str(),
+                // https://stackoverflow.com/questions/30154541/how-do-i-concatenate-strings
+                (self.url.to_string() + route).as_str(),
                 params
             )?
         )
@@ -41,7 +42,7 @@ impl Server {
         // https://docs.rs/url/latest/url/struct.Url.html#method.parse_with_params
         Ok(
             reqwest::blocking::get(
-                self.with_params([("id", id.to_string())])?
+                self.with_params("posts", [("id", id.to_string())])?
             )?
             .json::<Post>()?
         )
