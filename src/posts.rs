@@ -1,5 +1,4 @@
 use serde::{ Serialize, Deserialize };
-use reqwest::{Error};
 use bytesize::ByteSize;
 use std::fmt::Formatter;
 use std::fmt::Display;

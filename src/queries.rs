@@ -1,5 +1,4 @@
 use crate::{posts::{Post}, tui::get_default_block, network::{Server, SearchResult}};
-use reqwest::{Error};
 use crate::tui::{Window, PostWidget};
 
 use ratatui::{
@@ -9,17 +8,19 @@ use ratatui::{
     widgets::{List, ListState, StatefulWidget, Widget},
 };
 
+use anyhow::Error;
+
 use crossterm::event::KeyCode;
 
 
-pub struct SearchResults {
-    server: &server,
+pub struct SearchResults<'a> {
+    server: &'a Server,
     links: Vec<SearchResult>,
     list_state: ListState,
 }
 
-impl SearchResults {
-    pub fn new(server: &mut Server, links: Vec<SearchResult>) -> Self {
+impl<'a> SearchResults<'a> {
+    pub fn new(server: &'a Server, links: Vec<SearchResult>) -> Self {
         let mut list_state = ListState::default();
         list_state.select_first();
 
@@ -32,7 +33,7 @@ impl SearchResults {
     }
 }
 
-impl Widget for &mut SearchResults {
+impl<'a> Widget for &mut SearchResults<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         // inner is inside the block, not the whole magic scrollview buffer...
 
@@ -52,7 +53,7 @@ impl Widget for &mut SearchResults {
     }
 }
 
-impl Window for SearchResults {
+impl<'a> Window for SearchResults<'a> {
     fn handle_key_event(&mut self, key: KeyCode) {
         match key {
             // TODO: clamp after!
@@ -68,18 +69,18 @@ pub enum SearchMenuMode {
     Answer(PostWidget),
 }
 
-pub struct SearchMenu {
-    results: SearchResults,
+pub struct SearchMenu<'a> {
+    results: SearchResults<'a>,
     mode: SearchMenuMode,
 }
 
-impl SearchMenu {
-    pub fn new(results: SearchResults) -> Self {
+impl<'a> SearchMenu<'a> {
+    pub fn new(results: SearchResults<'a>) -> Self {
         Self {results, mode: SearchMenuMode::Results}
     }
 }
 
-impl Widget for &mut SearchMenu {
+impl<'a> Widget for &mut SearchMenu<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
     
         match &mut self.mode {
@@ -95,7 +96,7 @@ impl Widget for &mut SearchMenu {
     }
 }
 
-impl Window for SearchMenu {
+impl<'a> Window for SearchMenu<'a> {
     fn handle_key_event(&mut self, key: KeyCode) {
         match &mut self.mode {
             SearchMenuMode::Results => {

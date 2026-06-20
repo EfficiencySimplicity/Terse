@@ -51,7 +51,7 @@ impl Cli {
         let results = server.search(words);
 
         match results {
-            Ok(r) => {App::default().run(&mut SearchMenu::new(SearchResults::new(r))).unwrap()}
+            Ok(r) => {App::default().run(&mut SearchMenu::new(SearchResults::new(&server, r))).unwrap()}
             Err(e) => {println!("Error: {e}")}
         }
     }

@@ -4,7 +4,7 @@ use url::Url;
 use std::fmt::{Display, Formatter};
 use bytesize::ByteSize;
 
-use std::borrow::Borrow;
+// RIP: use std::borrow::Borrow; I have no idea why you even existed or if I even wrote you.
 
 use serde::{Deserialize};
 
@@ -22,11 +22,12 @@ impl Server {
 
     // I opt to use &strs instead of Options as the arguments, although setting query = None is really fun...
     // But it'd be a lotta extra text that could just be an empty &str
-    pub(super) fn with_params(&self, route: &str, query: &str)
+    // https://stackoverflow.com/questions/55079070/how-to-accept-str-string-and-string-in-a-single-function
+    pub(super) fn with_params(&self, route: &str, query: impl AsRef<str>) -> Url
     {
-        let url = self.url.clone();
+        let mut url = self.url.clone();
         url.set_path(route);
-        url.set_query(query);
+        url.set_query(Some(query.as_ref()));
         return url;
     }
 
@@ -34,7 +35,7 @@ impl Server {
         // https://docs.rs/url/latest/url/struct.Url.html#method.parse_with_params
         Ok(
             reqwest::blocking::get(
-                self.with_params("posts", format!("id={}", id.to_string()))
+                self.with_params("posts", format!("id={id}"))
             )?
             .json::<Post>()?
         )
