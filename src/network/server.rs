@@ -20,29 +20,21 @@ impl Server {
         Self {url}
     }
 
-    // TODO: clean this up
-    pub(super) fn with_params<I, K, V>(&self, route: &str, params: I) -> Result<Url, Error>
-    where
-        I: IntoIterator,
-        I::Item: Borrow<(K, V)>,
-        K: AsRef<str>,
-        V: AsRef<str>
+    // I opt to use &strs instead of Options as the arguments, although setting query = None is really fun...
+    // But it'd be a lotta extra text that could just be an empty &str
+    pub(super) fn with_params(&self, route: &str, query: &str)
     {
-        Ok(
-            // https://docs.rs/url/latest/url/struct.Url.html#method.parse_with_params
-            Url::parse_with_params(
-                // https://stackoverflow.com/questions/30154541/how-do-i-concatenate-strings
-                (self.url.to_string() + route).as_str(),
-                params
-            )?
-        )
+        let url = self.url.clone();
+        url.set_path(route);
+        url.set_query(query);
+        return url;
     }
 
     pub fn get_post(&self, id: u16) -> Result<Post, Error> {
         // https://docs.rs/url/latest/url/struct.Url.html#method.parse_with_params
         Ok(
             reqwest::blocking::get(
-                self.with_params("posts", [("id", id.to_string())])?
+                self.with_params("posts", format!("id={}", id.to_string()))
             )?
             .json::<Post>()?
         )
@@ -56,7 +48,7 @@ impl Server {
 
         // https://docs.rs/reqwest/latest/reqwest/blocking/struct.RequestBuilder.html
         Ok(
-            client.post(self.with_params("posts", [("nothing to", "see here")])?)
+            client.post(self.with_params("posts", ""))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .body(serde_json::to_string(&post)?)
             .send()?
@@ -79,7 +71,7 @@ impl Server {
     pub fn get_stats(&self) -> Result<ServerStats, Error> {
         Ok(
             // TODO: separate methods for getting self.url with path vs. with params vs. both?...
-            reqwest::blocking::get(self.with_params("stats", [("useless-thing", "bleh")])?)?
+            reqwest::blocking::get(self.with_params("stats", ""))?
             .json::<ServerStats>()?
         )
     }

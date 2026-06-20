@@ -31,7 +31,7 @@ impl Server {
             reqwest::blocking::get(
                 // Maybe not the most efficient, re-parsing, but it's negligible
                 // (Because url::Urls ain't mut, or don't seem to be)
-                self.with_params("search", [("query", query.join(" "))])?
+                self.with_params("search", format!("query={}", query.join(" ")))
             )?
             .json::<Vec<SearchResult>>()?
         )
