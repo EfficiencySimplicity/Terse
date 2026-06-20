@@ -56,7 +56,7 @@ impl Server {
 
         // https://docs.rs/reqwest/latest/reqwest/blocking/struct.RequestBuilder.html
         Ok(
-            client.post(self.url.clone())
+            client.post(self.with_params("posts", [("nothing to", "see here")])?)
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .body(serde_json::to_string(&post)?)
             .send()?
@@ -78,7 +78,8 @@ impl Server {
 
     pub fn get_stats(&self) -> Result<ServerStats, Error> {
         Ok(
-            reqwest::blocking::get(self.url.clone())?
+            // TODO: separate methods for getting self.url with path vs. with params vs. both?...
+            reqwest::blocking::get(self.with_params("stats", [("useless-thing", "bleh")])?)?
             .json::<ServerStats>()?
         )
     }
@@ -98,10 +99,10 @@ impl Display for ServerStats {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         // TODO: that bookmarked clean-list library
         // TODO: coloration
-        write!(f, "Server running Terse version {}", self.version)?;
-        write!(f, "Users on server: {}", self.users)?;
-        write!(f, "Answers on server: {}", self.posts)?;
-        write!(f, "Server instance age: {}", self.age)?;
-        write!(f, "Maximum post size: {}", ByteSize::b(self.max_post_size))
+        writeln!(f, "Server running Terse version {}", self.version)?;
+        writeln!(f, "Users on server: {}", self.users)?;
+        writeln!(f, "Answers on server: {}", self.posts)?;
+        writeln!(f, "Server instance age: {}", self.age)?;
+        writeln!(f, "Maximum post size: {}", ByteSize::b(self.max_post_size))
     }
 }

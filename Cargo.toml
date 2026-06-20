@@ -15,3 +15,12 @@ tokio = { version = "1.52.2", features = ["full"] }
 indoc = "2"
 url = "2.5.8"
 anyhow = "1.0.102"
+
+# https://stackoverflow.com/questions/29008127/why-are-rust-executables-so-huge
+# maybe optimize a bit for speed also?
+[profile.release]
+opt-level = 'z'     # Optimize for size
+lto = true          # Enable link-time optimization
+codegen-units = 1   # Reduce number of codegen units to increase optimizations
+panic = 'abort'     # Abort on panic
+strip = true        # Strip symbols from binary*

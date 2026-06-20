@@ -1,7 +1,6 @@
-use crate::{posts::{Post, get_post}, tui::get_default_block, network::{Server, SearchResult}};
+use crate::{posts::{Post}, tui::get_default_block, network::{Server, SearchResult}};
 use reqwest::{Error};
-use crate::tui::{App, Window, PostWidget};
-use url::Url;
+use crate::tui::{Window, PostWidget};
 
 use ratatui::{
     buffer::Buffer,
@@ -14,21 +13,22 @@ use crossterm::event::KeyCode;
 
 
 pub struct SearchResults {
+    server: &server,
     links: Vec<SearchResult>,
     list_state: ListState,
 }
 
 impl SearchResults {
-    fn new(links: Vec<SearchResult>) -> Self {
+    pub fn new(server: &mut Server, links: Vec<SearchResult>) -> Self {
         let mut list_state = ListState::default();
         list_state.select_first();
 
-        Self { links, list_state }
+        Self { server, links, list_state }
     }
 
     fn get_selected_article(&self) -> Result<Post, Error> {
         // https://stackoverflow.com/questions/37890405/is-there-a-way-to-simplify-converting-an-option-into-a-result-without-a-macro
-        get_post(self.links.get(self.list_state.selected().unwrap_or(0)).unwrap().postid)
+        self.server.get_post(self.links.get(self.list_state.selected().unwrap_or(0)).unwrap().postid)
     }
 }
 
@@ -74,7 +74,7 @@ pub struct SearchMenu {
 }
 
 impl SearchMenu {
-    fn new(results: SearchResults) -> Self {
+    pub fn new(results: SearchResults) -> Self {
         Self {results, mode: SearchMenuMode::Results}
     }
 }
@@ -117,16 +117,5 @@ impl Window for SearchMenu {
                 }
             }
         }
-    }
-}
-
-// NOTE: Query?...
-pub fn process_query(query: Vec<String>) {
-    let server = Server::new(Url::parse("http://localhost:3000").unwrap());
-    let results = server.search(query);
-
-    match results {
-        Ok(r) => {App::default().run(&mut SearchMenu::new(SearchResults::new(r))).unwrap()}
-        Err(e) => {println!("Error: {e}")}
     }
 }
