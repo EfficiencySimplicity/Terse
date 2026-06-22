@@ -28,11 +28,8 @@ impl<'a> From<&'a SearchResult> for Text<'a> {
 impl Server {
     pub fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
         Ok(
-            reqwest::blocking::get(
-                // Maybe not the most efficient, re-parsing, but it's negligible
-                // (Because url::Urls ain't mut, or don't seem to be)
-                self.with_params("search", format!("query={}", query.join(" ")))
-            )?
+            self.client.get(self.with_params("search", format!("query={}", query.join(" "))))
+            .send()?
             .json::<Vec<SearchResult>>()?
         )
     }

@@ -1,4 +1,4 @@
-use reqwest::{blocking::Response};
+use reqwest::{blocking::{Response, Client}};
 use anyhow::Error;
 use url::Url;
 use std::fmt::{Display, Formatter};
@@ -10,14 +10,17 @@ use serde::{Deserialize};
 
 use crate::posts::Post;
 
+
+// NOTE: In the end, this should be async so it don't block the TUI
 pub struct Server {   
     url: Url, 
+    pub(super) client: Client,
 }
 
 impl Server {
 
     pub fn new(url: Url) -> Self {
-        Self {url}
+        Self {url, client: Client::new()}
     }
 
     // I opt to use &strs instead of Options as the arguments, although setting query = None is really fun...
@@ -34,22 +37,16 @@ impl Server {
     pub fn get_post(&self, id: u16) -> Result<Post, Error> {
         // https://docs.rs/url/latest/url/struct.Url.html#method.parse_with_params
         Ok(
-            reqwest::blocking::get(
-                self.with_params("posts", format!("id={id}"))
-            )?
+            self.client.get(self.with_params("posts", format!("id={id}")))
+            .send()?
             .json::<Post>()?
         )
     }
 
-    // NOTE: In the end, this should be async so it don't block the TUI
     pub fn publish(&self, post: Post) -> Result<Response, Error> {
-        // I think we need a Client 'cause we need headers and bodies and stuff to POST
-        // https://docs.rs/reqwest/latest/reqwest/blocking/index.html#making-post-requests-or-setting-request-bodies
-        let client = reqwest::blocking::Client::new();
-
         // https://docs.rs/reqwest/latest/reqwest/blocking/struct.RequestBuilder.html
         Ok(
-            client.post(self.with_params("posts", ""))
+            self.client.post(self.with_params("posts", ""))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .body(serde_json::to_string(&post)?)
             .send()?
@@ -71,8 +68,8 @@ impl Server {
 
     pub fn get_stats(&self) -> Result<ServerStats, Error> {
         Ok(
-            // TODO: separate methods for getting self.url with path vs. with params vs. both?...
-            reqwest::blocking::get(self.with_params("stats", ""))?
+            self.client.get(self.with_params("stats", ""))
+            .send()?
             .json::<ServerStats>()?
         )
     }
