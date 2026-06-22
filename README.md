@@ -37,7 +37,8 @@ There's no ads, no banners asking you to donate, <!--You do that on the github--
 
 ### Terse is lightweight
 
-No worrying about "bandwidth" or "tokens"; Terse is the bare minimum, and all you need.
+No worrying about efficiency, bandwidth, cost or memory; Terse is simple, efficient, and more importantly, enough.
+
 
 <!-- <div align="center">
 
