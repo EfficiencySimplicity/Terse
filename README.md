@@ -39,6 +39,13 @@ There's no ads, no banners asking you to donate, <!--You do that on the github--
 
 No worrying about efficiency, bandwidth, cost or memory; Terse is simple, efficient, and more importantly, enough.
 
+<div>
+
+<hr>
+
+<sub>No part of Terse or Terse-server was written, designed, or influenced in any way by AI. Terse is 100% human-made</sub>
+
+</div>
 
 <!-- <div align="center">
 
