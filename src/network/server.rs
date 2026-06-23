@@ -4,6 +4,9 @@ use url::Url;
 use std::fmt::{Display, Formatter};
 use bytesize::ByteSize;
 
+use crate::network::account::*;
+use crate::utils::*;
+
 // RIP: use std::borrow::Borrow; I have no idea why you even existed or if I even wrote you.
 
 use serde::{Deserialize};
@@ -15,12 +18,13 @@ use crate::posts::Post;
 pub struct Server {   
     url: Url, 
     pub(super) client: Client,
+    pub accounts: Selectable<Account>,
 }
 
 impl Server {
 
     pub fn new(url: Url) -> Self {
-        Self {url, client: Client::new()}
+        Self {url, client: Client::new(), accounts: Selectable::new(vec![])}
     }
 
     // I opt to use &strs instead of Options as the arguments, although setting query = None is really fun...
