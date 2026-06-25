@@ -15,6 +15,7 @@ tokio = { version = "1.52.2", features = ["full"] }
 indoc = "2"
 url = "2.5.8"
 anyhow = "1.0.102"
+directories = "6.0.0"
 
 # https://stackoverflow.com/questions/29008127/why-are-rust-executables-so-huge
 # maybe optimize a bit for speed also?
