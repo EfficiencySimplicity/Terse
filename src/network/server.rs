@@ -26,6 +26,10 @@ impl Server {
     pub fn new(url: Url) -> Self {
         Self {url, client: Client::new(), accounts: Selectable::new(vec![])}
     }
+    
+    pub fn with_accounts(url: Url, accounts: Vec<Account>) -> Self {
+        Self {url, client: Client::new(), accounts: Selectable::new(accounts)}
+    }
 
     // I opt to use &strs instead of Options as the arguments, although setting query = None is really fun...
     // But it'd be a lotta extra text that could just be an empty &str
