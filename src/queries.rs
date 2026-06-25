@@ -35,8 +35,6 @@ impl<'a> SearchResults<'a> {
 
 impl<'a> Widget for &mut SearchResults<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        // inner is inside the block, not the whole magic scrollview buffer...
-
         let container = get_default_block()
             .title_bottom("( ((j / k) + enter) or (id) to select )");
 

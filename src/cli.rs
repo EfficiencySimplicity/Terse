@@ -47,7 +47,7 @@ impl Cli {
     }
 
     fn process_query(words: Vec<String>) {
-        let server = Server::new(Url::parse("http://localhost:3000").unwrap());
+        let server = Server::new(Url::parse("https://theterseverse.alwaysdata.net").unwrap());
         let results = server.search(words);
 
         match results {
@@ -57,7 +57,7 @@ impl Cli {
     }
 
     fn process_stats() {
-        let server = Server::new(Url::parse("http://localhost:3000").unwrap());
+        let server = Server::new(Url::parse("https://theterseverse.alwaysdata.net").unwrap());
         let results = server.get_stats();
 
         match results {
@@ -79,7 +79,7 @@ impl Cli {
         // to avoid unwrapping?
         let post = Post {title, content: content.unwrap()};
 
-        let server = Server::new(Url::parse("http://localhost:3000").unwrap());
+        let server = Server::new(Url::parse("https://theterseverse.alwaysdata.net").unwrap());
         // TODO: if Post gets a user field, we'll need to create the post in-server;
         // might not know what account you're in!
         let results = server.publish(post);

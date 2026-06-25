@@ -4,8 +4,8 @@ use url::Url;
 use std::fmt::{Display, Formatter};
 use bytesize::ByteSize;
 
-use crate::network::account::*;
-use crate::utils::*;
+use crate::network::Account;
+use crate::tui::Selectable;
 
 // RIP: use std::borrow::Borrow; I have no idea why you even existed or if I even wrote you.
 
