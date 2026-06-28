@@ -16,19 +16,19 @@ use crate::posts::Post;
 
 // NOTE: In the end, this should be async so it don't block the TUI
 pub struct Server {   
-    url: Url, 
+    pub(super) url: Url, 
     pub(super) client: Client,
-    pub accounts: Selectable<Account>,
+    pub(super) accounts: Vec<Account>,
 }
 
 impl Server {
 
     pub fn new(url: Url) -> Self {
-        Self {url, client: Client::new(), accounts: Selectable::new(vec![])}
+        Self {url, client: Client::new(), accounts: vec![]}
     }
     
     pub fn with_accounts(url: Url, accounts: Vec<Account>) -> Self {
-        Self {url, client: Client::new(), accounts: Selectable::new(accounts)}
+        Self {url, client: Client::new(), accounts: accounts}
     }
 
     // I opt to use &strs instead of Options as the arguments, although setting query = None is really fun...

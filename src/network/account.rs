@@ -1,7 +1,7 @@
 use ratatui::prelude::{Stylize, Span, Line, Text};
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Account {
     email: String,
     username: String,
