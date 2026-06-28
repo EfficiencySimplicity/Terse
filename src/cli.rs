@@ -1,12 +1,13 @@
-use clap::{Parser, Args};
+use clap::{Parser, Subcommand, Args};
 
-use crate::network::Server;
+use crate::network::{Server, ServerList};
 use crate::tui::App;
 use crate::queries::{SearchMenu, SearchResults};
 use crate::posts::Post;
 // TODO: we need to import Url with Server all the time... shouldn't there be an additional string method?
 // Well, we eventually won't be creating servers willy-nilly on-demand.
 use url::Url;
+use anyhow::Error;
 
 // https://docs.rs/clap/latest/clap/_derive/
 
@@ -19,6 +20,13 @@ pub enum Cli {
     #[command(name = "--pub")]
     // TODO: can this path be parsed as an actual Path type?
     Pub {title: String, path: String},
+    #[command(subcommand, name = "--server")]
+    Server(ServerSubcommand)
+}
+
+#[derive(Subcommand)]
+pub enum ServerSubcommand {
+    Add {url: String},
 }
 
 impl Cli {
@@ -42,7 +50,8 @@ impl Cli {
         match self {
             Cli::Query(query) => Self::process_query(query.words),
             Cli::Stats => Self::process_stats(),
-            Cli::Pub {title, path} => Self::process_pub(title, path)
+            Cli::Pub {title, path} => Self::process_pub(title, path),
+            Cli::Server(command) => Self::process_server_subcommand(command),
         }
     }
 
@@ -87,6 +96,17 @@ impl Cli {
         match results {
             Ok(_) => println!("Post published successfully!"),
             Err(e) => println!("Error in publishing post: {e}")
+        }
+    }
+
+    fn process_server_subcommand(command: ServerSubcommand) {
+        match command {
+            ServerSubcommand::Add { url } => {
+                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.add_server(&url)?)}() {
+                    Ok(_) => println!("Successfully added server {url}!"),
+                    Err(e) => println!("Error in adding server {url}: {e}")
+                }
+            }
         }
     }
 }

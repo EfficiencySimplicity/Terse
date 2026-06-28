@@ -62,6 +62,27 @@ impl ServerList {
             }
         }
     }
+
+    pub fn add_server(&mut self, url: &str) -> Result<(), Error> {
+        Ok(self.servers.push(Server::new(Url::parse(url)?)))
+    }
+
+    pub fn store(self) -> Result<(), Error> {
+        let dirs = ProjectDirs::from("", "InsanityOnAMachine", "Terse").ok_or(Error::msg("Home directory not found"))?;
+        let data_dir = dirs.data_dir();
+        let servers_file = data_dir.join("servers");
+
+        // NOTE: there are notes saying you should use try_exists() sometimes.
+        match &mut File::open(&servers_file) {
+            Ok(f) => {
+                todo!("Add a thing to make a ServerListBuilder from a ServerList and store it")
+            }
+            Err(e) => {
+                File::create(&servers_file)?;
+                return self.store()
+            }
+        }
+    }
 }
 
 // Literally window and widget can both be implemented already...
