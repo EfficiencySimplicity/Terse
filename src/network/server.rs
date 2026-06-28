@@ -1,11 +1,11 @@
 use reqwest::{blocking::{Response, Client}};
 use anyhow::Error;
 use url::Url;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Display, Formatter, Write};
 use bytesize::ByteSize;
 
 use crate::network::Account;
-use crate::tui::Selectable;
+use indent_write::fmt::IndentWriter;
 
 // RIP: use std::borrow::Borrow; I have no idea why you even existed or if I even wrote you.
 
@@ -80,6 +80,18 @@ impl Server {
             .send()?
             .json::<ServerStats>()?
         )
+    }
+}
+
+impl Display for Server {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut i = IndentWriter::new("\t", f);
+        writeln!(i, "{}", self.url.as_str())?;
+        writeln!(i, "Accounts: {}", self.accounts.len())?;
+        for account in &self.accounts {
+            writeln!(i, "{}", account)?;
+        }
+        Ok(())
     }
 }
 

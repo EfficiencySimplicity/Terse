@@ -18,6 +18,7 @@ anyhow = "1.0.102"
 directories = "6.0.0"
 features = "0.10.0"
 derive = "1.0.0"
+indent_write = "2.2.0"
 
 # https://stackoverflow.com/questions/29008127/why-are-rust-executables-so-huge
 # maybe optimize a bit for speed also?

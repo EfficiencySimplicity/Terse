@@ -27,6 +27,7 @@ pub enum Cli {
 #[derive(Subcommand)]
 pub enum ServerSubcommand {
     Add {url: String},
+    List,
 }
 
 impl Cli {
@@ -105,6 +106,12 @@ impl Cli {
                 match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.add_server(&url)?)}() {
                     Ok(_) => println!("Successfully added server {url}!"),
                     Err(e) => println!("Error in adding server {url}: {e}")
+                }
+            }
+            ServerSubcommand::List => {
+                match || -> Result<(), Error> {Ok(println!("{}", ServerList::from_config_file()?))}() {
+                    Err(e) => println!("Error in listing servers: {e}"),
+                    _ => {},
                 }
             }
         }

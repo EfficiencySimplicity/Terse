@@ -2,6 +2,7 @@ use crate::network::{Account, Server, server};
 
 use directories::ProjectDirs;
 use std::{fs::*, path::PathBuf};
+use std::fmt::Display;
 
 use url::Url;
 
@@ -37,20 +38,30 @@ impl From<ServerBuilder> for Server {
     }
 }
 
-impl Into<ServerBuilder> for Server {
+impl Into<ServerBuilder> for &Server {
     fn into(self) -> ServerBuilder {
-        ServerBuilder { url: String::from(self.url), accounts: self.accounts }
+        ServerBuilder { url: String::from(self.url.as_str()), accounts: self.accounts.clone() }
     }
 }
 
-impl Into<ServerListBuilder> for ServerList {
+impl Into<ServerListBuilder> for &ServerList {
     fn into(self) -> ServerListBuilder {
-        ServerListBuilder { servers: self.servers.into_iter().map(Server::into).collect() }
+        ServerListBuilder { servers: self.servers.iter().map(Into::<ServerBuilder>::into).collect() }
     }
 }
 
 pub struct ServerList {
     pub servers: Vec<Server>,
+}
+
+impl Display for ServerList {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Servers: {}", self.servers.len())?;
+        for server in &self.servers {
+            writeln!(f, "{}", server)?;
+        }
+        Ok(())
+    }
 }
 
 impl ServerList {
@@ -87,14 +98,16 @@ impl ServerList {
         let servers_file = data_dir.join("servers");
 
         std::fs::create_dir_all(servers_file.parent().ok_or(Error::msg("Could not get path parent"))?)?;
+        println!("Got config file: {:?}", servers_file.to_str());
         return Ok(servers_file)
     }
 
     pub fn add_server(&mut self, url: &str) -> Result<(), Error> {
-        Ok(self.servers.push(Server::new(Url::parse(url)?)))
+        self.servers.push(Server::new(Url::parse(url)?));
+        Ok(self.store()?)
     }
 
-    pub fn store(self) -> Result<(), Error> {
+    pub fn store(&self) -> Result<(), Error> {
         Ok(write(&Self::get_config_file()?, serde_json::to_string(&Into::<ServerListBuilder>::into(self))?)?)
     }
 }
