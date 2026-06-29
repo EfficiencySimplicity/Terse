@@ -103,8 +103,18 @@ impl ServerList {
     }
 
     pub fn add_server(&mut self, url: &str) -> Result<(), Error> {
-        self.servers.push(Server::new(Url::parse(url)?));
-        Ok(self.store()?)
+        let mut server = Server::new(Url::parse(url)?);
+        
+        if self.servers.iter().any(|x| return x.url == server.url) {
+            return Err(Error::msg(format!("Server {} already exists!", url)));
+        }
+        
+        if server.exists_and_is_a_terse_server()? {
+            self.servers.push(server);
+            return Ok(self.store()?);
+        } else {
+            return Err(Error::msg(format!("Cannot find a Terse server at {}", url)))
+        }
     }
 
     pub fn store(&self) -> Result<(), Error> {

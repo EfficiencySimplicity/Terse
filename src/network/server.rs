@@ -31,6 +31,14 @@ impl Server {
         Self {url, client: Client::new(), accounts: accounts}
     }
 
+    pub fn exists_and_is_a_terse_server(&mut self) -> Result<bool, Error> {
+        Ok(
+            self.client.get(self.with_params("exists-and-is-a-terse-server", ""))
+            .send()?
+            .json::<bool>()?
+        )
+    }
+
     // I opt to use &strs instead of Options as the arguments, although setting query = None is really fun...
     // But it'd be a lotta extra text that could just be an empty &str
     // https://stackoverflow.com/questions/55079070/how-to-accept-str-string-and-string-in-a-single-function
