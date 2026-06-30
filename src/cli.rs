@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand, Args};
 
-use crate::network::{Server, ServerList};
+use crate::network::{Server};
+use crate::storage::ServerList;
 use crate::tui::App;
 use crate::queries::{SearchMenu, SearchResults};
 use crate::posts::Post;
@@ -105,7 +106,7 @@ impl Cli {
             ServerSubcommand::Add { url } => {
                 match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.add_server(&url)?)}() {
                     Ok(_) => println!("Successfully added server {url}!"),
-                    Err(e) => println!("Error in adding server {url}: {e}")
+                    Err(e) => println!("{e}")
                 }
             }
             ServerSubcommand::List => {

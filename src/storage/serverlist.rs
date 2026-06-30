@@ -1,6 +1,7 @@
-use crate::network::{Account, Server, server};
+use crate::network::{Account, server::{Server, ServerValidityError}};
 
 use directories::ProjectDirs;
+use reqwest::StatusCode;
 use std::{fs::*, path::PathBuf};
 use std::fmt::Display;
 
@@ -102,18 +103,18 @@ impl ServerList {
         return Ok(servers_file)
     }
 
-    pub fn add_server(&mut self, url: &str) -> Result<(), Error> {
+    pub fn add_server(&mut self, url: &str) -> Result<(), AddServerError> {
         let mut server = Server::new(Url::parse(url)?);
         
         if self.servers.iter().any(|x| return x.url == server.url) {
-            return Err(Error::msg(format!("Server {} already exists!", url)));
+            return Err(AddServerError::ServerAlreadyExists)
         }
         
-        if server.exists_and_is_a_terse_server()? {
+        if server.exists_and_is_a_terse_server()? == () {
             self.servers.push(server);
             return Ok(self.store()?);
         } else {
-            return Err(Error::msg(format!("Cannot find a Terse server at {}", url)))
+            return Err(AddServerError::ServerSaysItIsntATerseServer)
         }
     }
 
@@ -122,4 +123,49 @@ impl ServerList {
     }
 }
 
+// https://stackoverflow.com/questions/48430836/rust-proper-error-handling-auto-convert-from-one-error-type-to-another-with-que
+#[derive(thiserror::Error, Debug)]
+pub enum AddServerError {
+    #[error("I wasn't able to parse the url")]
+    CantParseUrl,
+    #[error("I can't locate data file where the list of servers is stored")]
+    CantGetDataFile,
+    #[error("Server not responding; status code {0}")]
+    ServerNotResponding(String),
+    #[error("The server returned a {0} error when accessing the /exists-and-is-a-terse-server page")]
+    ServerGaveError(String),
+    #[error("The url you gave doesn't lead to an actively running Terse server")]
+    ServerNotATerseServer,
+    #[error("The url you gave seems to be a Terse server, but it didn't answer with a readable true/false response")]
+    ServerGaveBadData,
+    #[error("The url you gave went through the effort to actually explicitly say that it isn't a Terse server")]
+    ServerSaysItIsntATerseServer,
+    #[error("I wasn't able to save the new server to the data file")]
+    UnableToSaveServerList,
+    #[error("You already have that server saved")]
+    ServerAlreadyExists,
+    #[error("The server told me to redirect")]
+    ServerRedirected,
+    #[error("I found an unexpected error: {0}")]
+    UnknownError(Error)
+}
+
+// https://burntsushi.net/rust-error-handling/#the-from-trait
+impl From<url::ParseError> for AddServerError {
+    fn from(value: url::ParseError) -> Self {
+        Self::CantParseUrl
+    }
+}
+
+impl From<ServerValidityError> for AddServerError {
+    fn from(value: ServerValidityError) -> Self {
+        Self::ServerNotATerseServer
+    }
+}
+
+impl From<Error> for AddServerError {
+    fn from(value: Error) -> Self {
+        AddServerError::UnableToSaveServerList
+    }
+}
 // Literally window and widget can both be implemented already...

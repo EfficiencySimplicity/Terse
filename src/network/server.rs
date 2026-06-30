@@ -1,4 +1,4 @@
-use reqwest::{blocking::{Response, Client}};
+use reqwest::{StatusCode, blocking::{Client, Response}};
 use anyhow::Error;
 use url::Url;
 use std::fmt::{Display, Formatter, Write};
@@ -16,9 +16,9 @@ use crate::posts::Post;
 
 // NOTE: In the end, this should be async so it don't block the TUI
 pub struct Server {   
-    pub(super) url: Url, 
-    pub(super) client: Client,
-    pub(super) accounts: Vec<Account>,
+    pub(crate) url: Url, 
+    pub(crate) client: Client,
+    pub(crate) accounts: Vec<Account>,
 }
 
 impl Server {
@@ -31,12 +31,14 @@ impl Server {
         Self {url, client: Client::new(), accounts: accounts}
     }
 
-    pub fn exists_and_is_a_terse_server(&mut self) -> Result<bool, Error> {
-        Ok(
-            self.client.get(self.with_params("exists-and-is-a-terse-server", ""))
-            .send()?
-            .json::<bool>()?
-        )
+    pub fn exists_and_is_a_terse_server(&mut self) -> Result<(), ServerValidityError> {
+        let status = self.client.get(self.with_params("exists-and-is-a-terse-server", ""))
+        .send()?.status();
+
+        match status {
+            StatusCode::OK => Ok(()),
+            _ => Err(ServerValidityError::Other(status))
+        }
     }
 
     // I opt to use &strs instead of Options as the arguments, although setting query = None is really fun...
@@ -122,5 +124,30 @@ impl Display for ServerStats {
         writeln!(f, "Answers on server: {}", self.posts)?;
         writeln!(f, "Server instance age: {}", self.age)?;
         writeln!(f, "Maximum post size: {}", ByteSize::b(self.max_post_size))
+    }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum ServerValidityError {
+    // No contact at all; the site doesn't exist
+    #[error("I can't connect to the server")]
+    CannotConnect,
+    // There's no /exists-and-is-a-terse-server path
+    #[error("The server isn't a Terse server")]
+    ServerIsNotATerseServer,
+    // The /exists-and-is-a-terse-server path returned false, for whatever reason
+    #[error("The server went to the trouble to explicitly say that it isn't a Terse server")]
+    ServerSaysItIsNotATerseServer,
+    // The /exists-and-is-a-terse-server path returned an invalid bool, for whatever reason
+    #[error("The server seems to be a Terse server, but sent an invalid answer when asked")]
+    BadData,
+    // Any other status code
+    #[error("The server returned an unexpected status code: {0}")]
+    Other(StatusCode),
+}
+
+impl From<reqwest::Error> for ServerValidityError {
+    fn from(value: reqwest::Error) -> Self {
+        ServerValidityError::CannotConnect
     }
 }
