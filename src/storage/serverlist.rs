@@ -106,16 +106,32 @@ impl ServerList {
     pub fn add_server(&mut self, url: &str) -> Result<(), AddServerError> {
         let mut server = Server::new(Url::parse(url)?);
         
-        if self.servers.iter().any(|x| return x.url == server.url) {
+        if self.servers.iter().any(|x| {x.url == server.url}) {
             return Err(AddServerError::ServerAlreadyExists)
         }
         
-        if server.exists_and_is_a_terse_server()? == () {
-            self.servers.push(server);
-            return Ok(self.store()?);
-        } else {
-            return Err(AddServerError::ServerSaysItIsntATerseServer)
+        server.exists_and_is_a_terse_server()?;
+
+        self.servers.push(server);
+        return Ok(self.store()?);
+    }
+
+    pub fn remove_server(&mut self, url: &str) -> Result<(), Error> {
+
+        let mut server = Server::new(Url::parse(url)?);
+        
+        if self.servers.iter().all(|x| {x.url != server.url}) {
+            return Err(Error::msg(
+                format!(
+                    "I couldn't find a server named {} in the list; 
+                    Try running --server list to see all the servers you have",
+                    url
+                )
+            ))
         }
+    
+        self.servers.retain(|x| {x.url != server.url});
+        return Ok(self.store()?);
     }
 
     pub fn store(&self) -> Result<(), Error> {
@@ -130,22 +146,12 @@ pub enum AddServerError {
     CantParseUrl,
     #[error("I can't locate data file where the list of servers is stored")]
     CantGetDataFile,
-    #[error("Server not responding; status code {0}")]
-    ServerNotResponding(String),
-    #[error("The server returned a {0} error when accessing the /exists-and-is-a-terse-server page")]
-    ServerGaveError(String),
     #[error("The url you gave doesn't lead to an actively running Terse server")]
     ServerNotATerseServer,
-    #[error("The url you gave seems to be a Terse server, but it didn't answer with a readable true/false response")]
-    ServerGaveBadData,
-    #[error("The url you gave went through the effort to actually explicitly say that it isn't a Terse server")]
-    ServerSaysItIsntATerseServer,
     #[error("I wasn't able to save the new server to the data file")]
     UnableToSaveServerList,
     #[error("You already have that server saved")]
     ServerAlreadyExists,
-    #[error("The server told me to redirect")]
-    ServerRedirected,
     #[error("I found an unexpected error: {0}")]
     UnknownError(Error)
 }

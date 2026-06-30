@@ -11,6 +11,7 @@ use url::Url;
 use anyhow::Error;
 
 // https://docs.rs/clap/latest/clap/_derive/
+// TODO: -s hand commands
 
 #[derive(Parser)]
 pub enum Cli {
@@ -28,6 +29,7 @@ pub enum Cli {
 #[derive(Subcommand)]
 pub enum ServerSubcommand {
     Add {url: String},
+    Remove {url: String},
     List,
 }
 
@@ -53,7 +55,7 @@ impl Cli {
             Cli::Query(query) => Self::process_query(query.words),
             Cli::Stats => Self::process_stats(),
             Cli::Pub {title, path} => Self::process_pub(title, path),
-            Cli::Server(command) => Self::process_server_subcommand(command),
+            Cli::Server(command) => command.process(),
         }
     }
 
@@ -100,19 +102,27 @@ impl Cli {
             Err(e) => println!("Error in publishing post: {e}")
         }
     }
+}
 
-    fn process_server_subcommand(command: ServerSubcommand) {
-        match command {
-            ServerSubcommand::Add { url } => {
+impl ServerSubcommand {
+    fn process(self) {
+        match self {
+            Self::Add { url } => {
                 match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.add_server(&url)?)}() {
                     Ok(_) => println!("Successfully added server {url}!"),
                     Err(e) => println!("{e}")
                 }
             }
-            ServerSubcommand::List => {
+            Self::List => {
                 match || -> Result<(), Error> {Ok(println!("{}", ServerList::from_config_file()?))}() {
                     Err(e) => println!("Error in listing servers: {e}"),
                     _ => {},
+                }
+            }
+            Self::Remove { url } => {
+                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.remove_server(&url)?)}() {
+                    Ok(_) => println!("I successfully removed the server {}", &url),
+                    Err(e) => println!("{e}"),
                 }
             }
         }
