@@ -37,6 +37,7 @@ impl Server {
 
         match status {
             StatusCode::OK => Ok(()),
+            StatusCode::NOT_FOUND => Err(ServerValidityError::ServerIsNotATerseServer),
             _ => Err(ServerValidityError::Other(status))
         }
     }
@@ -135,12 +136,6 @@ pub enum ServerValidityError {
     // There's no /exists-and-is-a-terse-server path
     #[error("The server isn't a Terse server")]
     ServerIsNotATerseServer,
-    // The /exists-and-is-a-terse-server path returned false, for whatever reason
-    #[error("The server went to the trouble to explicitly say that it isn't a Terse server")]
-    ServerSaysItIsNotATerseServer,
-    // The /exists-and-is-a-terse-server path returned an invalid bool, for whatever reason
-    #[error("The server seems to be a Terse server, but sent an invalid answer when asked")]
-    BadData,
     // Any other status code
     #[error("The server returned an unexpected status code: {0}")]
     Other(StatusCode),

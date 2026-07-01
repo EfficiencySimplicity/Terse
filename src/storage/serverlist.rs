@@ -1,9 +1,10 @@
 use crate::network::{Account, server::{Server, ServerValidityError}};
 
 use directories::ProjectDirs;
-use reqwest::StatusCode;
 use std::{fs::*, path::PathBuf};
 use std::fmt::Display;
+
+use indoc::indoc;
 
 use url::Url;
 
@@ -11,9 +12,11 @@ use serde::{Serialize, Deserialize};
 
 use anyhow::Error;
 
-//pub type ServerList = Selectable<Server>;
+// Servers, ServerLists, etc...
+// They have un-JSON-able fields in them. No derive Deserialize built in
+// So the ServerBuilder and ServerListBuilder work as intermediates
+// Probably a better way to do it
 
-// TODO: make Server accept Client, so it can be Deserialize, so there's no need for builders.
 #[derive(Serialize, Deserialize)]
 pub struct ServerListBuilder {
     pub servers: Vec<ServerBuilder>
@@ -84,7 +87,7 @@ impl ServerList {
                     _ => return Ok(serde_json::from_str::<ServerListBuilder>(&string)?.into()),
                 }
             }
-            Err(e) => {
+            Err(_) => {
                 println!("Creating file...");
                 File::create(&servers_file)?;
                 return Self::from_config_file();
@@ -92,20 +95,30 @@ impl ServerList {
         }
     }
 
-    pub fn get_config_file() -> Result<PathBuf, Error> {
+    pub fn get_config_file() -> Result<PathBuf, SerializationError> {
         // https://stackoverflow.com/questions/37890405/is-there-a-way-to-simplify-converting-an-option-into-a-result-without-a-macro
-        let dirs = ProjectDirs::from("", "InsanityOnAMachine", "Terse").ok_or(Error::msg("Home directory not found!"))?;
+        let dirs = ProjectDirs::from("", "InsanityOnAMachine", "Terse").ok_or(SerializationError::BadFilesystemConfig)?;
         let data_dir = dirs.data_dir();
         let servers_file = data_dir.join("servers");
 
-        std::fs::create_dir_all(servers_file.parent().ok_or(Error::msg("Could not get path parent"))?)?;
-        println!("Got config file: {:?}", servers_file.to_str());
+        std::fs::create_dir_all(
+            servers_file.parent()
+            .ok_or(SerializationError::CouldntCreateFile(
+                Error::msg("The storage file path I tried had no parent, IMPOSSIBLE. Your system is haunted! Scary!")
+            ))?
+        )
+        .or(Err(SerializationError::CouldntCreateFile(
+            Error::msg("I couldn't create the path to the storage file")
+        )))?;
         return Ok(servers_file)
     }
 
     pub fn add_server(&mut self, url: &str) -> Result<(), AddServerError> {
         let mut server = Server::new(Url::parse(url)?);
         
+        // Sometimes different urls redirect to the same url in the end;
+        // I feel like this should be allowed, Terse should just assume
+        // that redirects are two different servers.
         if self.servers.iter().any(|x| {x.url == server.url}) {
             return Err(AddServerError::ServerAlreadyExists)
         }
@@ -118,13 +131,16 @@ impl ServerList {
 
     pub fn remove_server(&mut self, url: &str) -> Result<(), Error> {
 
-        let mut server = Server::new(Url::parse(url)?);
+        // We parse the URL 'cause it seems to do a *bit* of normalization
+        let server = Server::new(Url::parse(url)?);
         
         if self.servers.iter().all(|x| {x.url != server.url}) {
             return Err(Error::msg(
                 format!(
-                    "I couldn't find a server named {} in the list; 
-                    Try running --server list to see all the servers you have",
+                    indoc! {
+                        "I couldn't find a server named {} in the list; 
+                        Try running --server list to see all the servers you have",
+                    },
                     url
                 )
             ))
@@ -134,9 +150,30 @@ impl ServerList {
         return Ok(self.store()?);
     }
 
-    pub fn store(&self) -> Result<(), Error> {
-        Ok(write(&Self::get_config_file()?, serde_json::to_string(&Into::<ServerListBuilder>::into(self))?)?)
+    pub fn store(&self) -> Result<(), SerializationError> {
+        // TODO: serde_json::to_writer takes a Write-able; try using it?
+        let storage_file = Self::get_config_file()?;
+        let builder = &Into::<ServerListBuilder>::into(self);
+        let json_string = serde_json::to_string(builder).or(Err(SerializationError::CantSerializeSelf))?;
+
+        write(storage_file, json_string).or(Err(SerializationError::CantWriteToFile))?;
+        Ok(())
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum SerializationError {
+    // https://docs.rs/directories/latest/directories/struct.ProjectDirs.html#method.from
+    #[error("I couldn't decide where to look for the storage file, I couldn't find a $HOME base")]
+    BadFilesystemConfig,
+    #[error("I couldn't find the storage file, and I had trouble creating it:\n{0}")]
+    CouldntCreateFile(Error),
+    #[error("I tried to read the storage file, but it contained bad data")]
+    BadDataInFile,
+    #[error("I couldn't successfully turn the data into JSON to save it in the storage file.\nThis shouldn't ever happen, lucky you!")]
+    CantSerializeSelf,
+    #[error("I couldn't save to the storage file")]
+    CantWriteToFile,
 }
 
 // https://stackoverflow.com/questions/48430836/rust-proper-error-handling-auto-convert-from-one-error-type-to-another-with-que
@@ -144,16 +181,12 @@ impl ServerList {
 pub enum AddServerError {
     #[error("I wasn't able to parse the url")]
     CantParseUrl,
-    #[error("I can't locate data file where the list of servers is stored")]
-    CantGetDataFile,
-    #[error("The url you gave doesn't lead to an actively running Terse server")]
-    ServerNotATerseServer,
-    #[error("I wasn't able to save the new server to the data file")]
-    UnableToSaveServerList,
+    #[error("I had a problem with storage;\n{0}")]
+    SerializationError(SerializationError),
     #[error("You already have that server saved")]
     ServerAlreadyExists,
-    #[error("I found an unexpected error: {0}")]
-    UnknownError(Error)
+    #[error("I wasn't able to add the server;\n{0}")]
+    Other(Error)
 }
 
 // https://burntsushi.net/rust-error-handling/#the-from-trait
@@ -165,13 +198,13 @@ impl From<url::ParseError> for AddServerError {
 
 impl From<ServerValidityError> for AddServerError {
     fn from(value: ServerValidityError) -> Self {
-        Self::ServerNotATerseServer
+        Self::Other(Error::from(value))
     }
 }
 
-impl From<Error> for AddServerError {
-    fn from(value: Error) -> Self {
-        AddServerError::UnableToSaveServerList
+impl From<SerializationError> for AddServerError {
+    fn from(value: SerializationError) -> Self {
+        Self::SerializationError(value)
     }
 }
 // Literally window and widget can both be implemented already...
