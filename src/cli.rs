@@ -16,7 +16,7 @@ use crate::posts::Post;
 #[derive(Parser)]
 pub enum Cli {
     #[command(name = "--search")]
-    Query(Query),
+    Query {query: Vec<String>},
     #[command(name = "--stats")]
     Stats,
     #[command(name = "--pub")]
@@ -30,12 +30,6 @@ pub enum ServerSubcommand {
     Add {url: Url},
     Remove {url: Url},
     List,
-}
-
-// Vec<String> seems to be unparseable by default
-#[derive(Args)]
-pub struct Query {
-    pub words: Vec<String>,
 }
 
 impl Cli {
@@ -65,7 +59,7 @@ impl Cli {
 
     pub fn process(self) {
         match self {
-            Cli::Query(query)      => Self::process_query(query.words),
+            Cli::Query {query}     => Self::process_query(query),
             Cli::Stats             => Self::process_stats(),
             Cli::Pub {title, path} => Self::process_pub(title, path),
             Cli::Server(command)   => command.process(),
