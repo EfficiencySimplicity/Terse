@@ -1,7 +1,6 @@
-use crate::network::Server;
-
 use serde::Deserialize;
 use anyhow::Error;
+use super::Server;
 
 use ratatui::text::{Span, Line, Text};
 

@@ -13,6 +13,9 @@ use serde::{Serialize, Deserialize};
 
 use crate::posts::Post;
 
+// https://stackoverflow.com/questions/63369629/how-can-i-split-up-a-large-impl-over-multiple-files
+pub mod search;
+
 
 // NOTE: In the end, this should be async so it don't block the TUI
 #[derive(Clone, Serialize, Deserialize)]
@@ -20,7 +23,7 @@ use crate::posts::Post;
 #[serde(into="ServerSerializer")]
 pub struct Server {   
     pub(crate) url: Url, 
-    pub(crate) client: Client,
+    client: Client,
     pub(crate) accounts: Vec<Account>,
 }
 
@@ -34,7 +37,7 @@ impl Server {
         Self {url, client: Client::new(), accounts: accounts}
     }
 
-    pub fn exists_and_is_a_terse_server(&mut self) -> Result<(), ServerValidityError> {
+    pub fn exists_and_is_a_terse_server(&self) -> Result<(), ServerValidityError> {
         let status = self.client.get(self.with_params("exists-and-is-a-terse-server", ""))
         .send()?.status();
 

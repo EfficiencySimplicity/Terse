@@ -1,13 +1,11 @@
 use clap::{Parser, Subcommand, Args};
 
-use crate::network::{Server};
 use crate::storage::ServerList;
 use crate::tui::App;
 use crate::queries::{SearchMenu, SearchResults};
 use crate::posts::Post;
 // TODO: we need to import Url with Server all the time... shouldn't there be an additional string method?
 // Well, we eventually won't be creating servers willy-nilly on-demand.
-use url::Url;
 use anyhow::Error;
 
 // https://docs.rs/clap/latest/clap/_derive/
@@ -60,7 +58,13 @@ impl Cli {
     }
 
     fn process_query(words: Vec<String>) {
-        let server = Server::new(Url::parse("https://theterseverse.alwaysdata.net").unwrap());
+        // A note on the terminology; if these two are one line,
+        // we get a Temporary value dropped while borrowed error;
+        // https://stackoverflow.com/questions/71626083/error-e0716-temporary-value-dropped-while-borrowed
+        // Which I believe is due to shaky knowledge of &mut and stuff
+        // when making the selected() function in ServerList...
+        let mut server_list = ServerList::from_config_file().unwrap();
+        let server = server_list.selected().unwrap();
         let results = server.search(words);
 
         match results {
@@ -70,7 +74,8 @@ impl Cli {
     }
 
     fn process_stats() {
-        let server = Server::new(Url::parse("https://theterseverse.alwaysdata.net").unwrap());
+        let mut server_list = ServerList::from_config_file().unwrap();
+        let server = server_list.selected().unwrap();
         let results = server.get_stats();
 
         match results {
@@ -92,7 +97,8 @@ impl Cli {
         // to avoid unwrapping?
         let post = Post {title, content: content.unwrap()};
 
-        let server = Server::new(Url::parse("https://theterseverse.alwaysdata.net").unwrap());
+        let mut server_list = ServerList::from_config_file().unwrap();
+        let server = server_list.selected().unwrap();
         // TODO: if Post gets a user field, we'll need to create the post in-server;
         // might not know what account you're in!
         let results = server.publish(post);

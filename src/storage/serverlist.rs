@@ -15,12 +15,13 @@ use anyhow::Error;
 
 #[derive(Serialize, Deserialize)]
 pub struct ServerListSerializer {
-    pub servers: Vec<Server>
+    pub servers: Vec<Server>,
+    pub selected: Option<usize>,
 }
 
 impl From<ServerListSerializer> for ServerList {
     fn from(value: ServerListSerializer) -> Self {
-        ServerList { servers: value.servers }
+        ServerList { servers: value.servers, selected: value.selected }
     }
         // https://stackoverflow.com/questions/63798662/how-do-i-convert-a-vecresultt-e-to-resultvect-e
         // Ok(ServerList { servers: self.servers.into_iter().map(Server::from).collect::<Result<Vec<Server>, Error>>()? }
@@ -28,7 +29,7 @@ impl From<ServerListSerializer> for ServerList {
 
 impl Into<ServerListSerializer> for ServerList {
     fn into(self) -> ServerListSerializer {
-        ServerListSerializer { servers: self.servers.clone() }
+        ServerListSerializer { servers: self.servers.clone(), selected: self.selected }
     }
 }
 
@@ -37,6 +38,7 @@ impl Into<ServerListSerializer> for ServerList {
 #[serde(into="ServerListSerializer")]
 pub struct ServerList {
     pub servers: Vec<Server>,
+    pub selected: Option<usize>,
 }
 
 impl Display for ServerList {
@@ -51,7 +53,11 @@ impl Display for ServerList {
 
 impl ServerList {
     pub fn empty() -> Self {
-        return Self { servers: vec![] }
+        return Self { servers: vec![], selected: None }
+    }
+
+    pub fn selected(&mut self) -> Option<&mut Server> {
+        return self.selected.map(|x| &mut self.servers[x as usize])
     }
     
     pub fn from_config_file() -> Result<ServerList, Error> {
@@ -96,7 +102,7 @@ impl ServerList {
     }
 
     pub fn add_server(&mut self, url: &str) -> Result<(), AddServerError> {
-        let mut server = Server::new(Url::parse(url)?);
+        let server = Server::new(Url::parse(url)?);
         
         // Sometimes different urls redirect to the same url in the end;
         // I feel like this should be allowed, Terse should just assume
@@ -108,6 +114,9 @@ impl ServerList {
         server.exists_and_is_a_terse_server()?;
 
         self.servers.push(server);
+        // NOTE: maybe always hop onto the brand new server?
+        // or maybe a flag to do so or avoid doing so
+        if self.servers.len() == 1 { self.selected = Some(0) }
         return Ok(self.store()?);
     }
 
@@ -129,6 +138,9 @@ impl ServerList {
         }
     
         self.servers.retain(|x| {x.url != server.url});
+        if self.servers.len() == 0 { self.selected = None } else
+        if self.selected.expect("If the length of the server list is non-zero, the selected element should be Some") 
+        > self.servers.len() - 1 { self.selected = Some(self.servers.len() - 1) }
         return Ok(self.store()?);
     }
 
