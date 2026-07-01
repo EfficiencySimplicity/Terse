@@ -1,4 +1,4 @@
-use crate::{posts::{Post}, tui::get_default_block, network::{Server, search::SearchResult}};
+use crate::{posts::{Post}, tui::get_default_block, network::{Server, SearchResult}};
 use crate::tui::{Window, PostWidget};
 
 use ratatui::{

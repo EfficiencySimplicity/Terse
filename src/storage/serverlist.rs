@@ -101,15 +101,15 @@ impl ServerList {
         return Ok(servers_file)
     }
 
-    pub fn add_server(&mut self, url: &str) -> Result<(), AddServerError> {
-        let server = Server::new(Url::parse(url)?);
-        
+    pub fn add_server(&mut self, url: Url) -> Result<(), AddServerError> {        
         // Sometimes different urls redirect to the same url in the end;
         // I feel like this should be allowed, Terse should just assume
         // that redirects are two different servers.
-        if self.servers.iter().any(|x| {x.url == server.url}) {
+        if self.servers.iter().any(|x| {x.url == url}) {
             return Err(AddServerError::ServerAlreadyExists)
         }
+
+        let server = Server::new(url);
         
         server.exists_and_is_a_terse_server()?;
 
@@ -120,12 +120,9 @@ impl ServerList {
         return Ok(self.store()?);
     }
 
-    pub fn remove_server(&mut self, url: &str) -> Result<(), Error> {
-
-        // We parse the URL 'cause it seems to do a *bit* of normalization
-        let server = Server::new(Url::parse(url)?);
+    pub fn remove_server(&mut self, url: Url) -> Result<(), Error> {
         
-        if self.servers.iter().all(|x| {x.url != server.url}) {
+        if self.servers.iter().all(|x| {x.url != url}) {
             return Err(Error::msg(
                 format!(
                     indoc! {
@@ -137,7 +134,7 @@ impl ServerList {
             ))
         }
     
-        self.servers.retain(|x| {x.url != server.url});
+        self.servers.retain(|x| {x.url != url});
         if self.servers.len() == 0 { self.selected = None } else
         if self.selected.expect("If the length of the server list is non-zero, the selected element should be Some") 
         > self.servers.len() - 1 { self.selected = Some(self.servers.len() - 1) }

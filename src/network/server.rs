@@ -15,6 +15,7 @@ use crate::posts::Post;
 
 // https://stackoverflow.com/questions/63369629/how-can-i-split-up-a-large-impl-over-multiple-files
 pub mod search;
+pub use search::*;
 
 
 // NOTE: In the end, this should be async so it don't block the TUI
@@ -24,7 +25,7 @@ pub mod search;
 pub struct Server {   
     pub(crate) url: Url, 
     client: Client,
-    pub(crate) accounts: Vec<Account>,
+    accounts: Vec<Account>,
 }
 
 impl Server {

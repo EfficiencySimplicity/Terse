@@ -1,15 +1,17 @@
 use clap::{Parser, Subcommand, Args};
+use anyhow::Error;
+use url::Url;
+
+use std::path::PathBuf;
 
 use crate::storage::ServerList;
 use crate::tui::App;
 use crate::queries::{SearchMenu, SearchResults};
 use crate::posts::Post;
-// TODO: we need to import Url with Server all the time... shouldn't there be an additional string method?
-// Well, we eventually won't be creating servers willy-nilly on-demand.
-use anyhow::Error;
 
 // https://docs.rs/clap/latest/clap/_derive/
 // TODO: -s hand commands
+// TODO: help
 
 #[derive(Parser)]
 pub enum Cli {
@@ -18,16 +20,15 @@ pub enum Cli {
     #[command(name = "--stats")]
     Stats,
     #[command(name = "--pub")]
-    // TODO: can this path be parsed as an actual Path type?
-    Pub {title: String, path: String},
+    Pub {title: String, path: PathBuf},
     #[command(subcommand, name = "--server")]
     Server(ServerSubcommand)
 }
 
 #[derive(Subcommand)]
 pub enum ServerSubcommand {
-    Add {url: String},
-    Remove {url: String},
+    Add {url: Url},
+    Remove {url: Url},
     List,
 }
 
@@ -84,7 +85,7 @@ impl Cli {
         }
     }
 
-    fn process_pub(title: String, path: String) {
+    fn process_pub(title: String, path: PathBuf) {
 
         let content = std::fs::read_to_string(&path);
         
@@ -114,7 +115,7 @@ impl ServerSubcommand {
     fn process(self) {
         match self {
             Self::Add { url } => {
-                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.add_server(&url)?)}() {
+                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.add_server(url.clone())?)}() {
                     Ok(_) => println!("Successfully added server {url}!"),
                     Err(e) => println!("{e}")
                 }
@@ -126,8 +127,8 @@ impl ServerSubcommand {
                 }
             }
             Self::Remove { url } => {
-                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.remove_server(&url)?)}() {
-                    Ok(_) => println!("I successfully removed the server {}", &url),
+                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.remove_server(url.clone())?)}() {
+                    Ok(_) => println!("I successfully removed the server {}", url),
                     Err(e) => println!("{e}"),
                 }
             }
