@@ -1,4 +1,4 @@
-use crate::network::{Account, server::{Server, ServerValidityError}};
+use crate::network::{Server, ServerValidityError};
 
 use directories::ProjectDirs;
 use std::{fs::*, path::PathBuf};
@@ -12,48 +12,29 @@ use serde::{Serialize, Deserialize};
 
 use anyhow::Error;
 
-// Servers, ServerLists, etc...
-// They have un-JSON-able fields in them. No derive Deserialize built in
-// So the ServerBuilder and ServerListBuilder work as intermediates
-// Probably a better way to do it
 
 #[derive(Serialize, Deserialize)]
-pub struct ServerListBuilder {
-    pub servers: Vec<ServerBuilder>
+pub struct ServerListSerializer {
+    pub servers: Vec<Server>
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct ServerBuilder {
-    pub url: String,
-    pub accounts: Vec<Account>,
-}
-
-impl From<ServerListBuilder> for ServerList {
-    fn from(value: ServerListBuilder) -> Self {
-        ServerList { servers: value.servers.into_iter().map(Server::from).collect::<Vec<Server>>()}
+impl From<ServerListSerializer> for ServerList {
+    fn from(value: ServerListSerializer) -> Self {
+        ServerList { servers: value.servers }
     }
         // https://stackoverflow.com/questions/63798662/how-do-i-convert-a-vecresultt-e-to-resultvect-e
         // Ok(ServerList { servers: self.servers.into_iter().map(Server::from).collect::<Result<Vec<Server>, Error>>()? }
 }
 
-impl From<ServerBuilder> for Server {
-    fn from(value: ServerBuilder) -> Self {
-        Self::with_accounts(Url::parse(&value.url).expect("Could not parse server!"), value.accounts)
+impl Into<ServerListSerializer> for ServerList {
+    fn into(self) -> ServerListSerializer {
+        ServerListSerializer { servers: self.servers.clone() }
     }
 }
 
-impl Into<ServerBuilder> for &Server {
-    fn into(self) -> ServerBuilder {
-        ServerBuilder { url: String::from(self.url.as_str()), accounts: self.accounts.clone() }
-    }
-}
-
-impl Into<ServerListBuilder> for &ServerList {
-    fn into(self) -> ServerListBuilder {
-        ServerListBuilder { servers: self.servers.iter().map(Into::<ServerBuilder>::into).collect() }
-    }
-}
-
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(from="ServerListSerializer")]
+#[serde(into="ServerListSerializer")]
 pub struct ServerList {
     pub servers: Vec<Server>,
 }
@@ -81,10 +62,11 @@ impl ServerList {
             Ok(string) => {
                 // NOTE: This could be a std::io::BufReader that wraps f;
                 // Would that be any better?
+                // Also, can serde just read from file?
                 println!("Reading config file...");
                 match string.as_str() {
                     "" => return Ok(Self::empty()),
-                    _ => return Ok(serde_json::from_str::<ServerListBuilder>(&string)?.into()),
+                    _ => return Ok(serde_json::from_str::<ServerList>(&string)?.into()),
                 }
             }
             Err(_) => {
@@ -153,8 +135,7 @@ impl ServerList {
     pub fn store(&self) -> Result<(), SerializationError> {
         // TODO: serde_json::to_writer takes a Write-able; try using it?
         let storage_file = Self::get_config_file()?;
-        let builder = &Into::<ServerListBuilder>::into(self);
-        let json_string = serde_json::to_string(builder).or(Err(SerializationError::CantSerializeSelf))?;
+        let json_string = serde_json::to_string(self).or(Err(SerializationError::CantSerializeSelf))?;
 
         write(storage_file, json_string).or(Err(SerializationError::CantWriteToFile))?;
         Ok(())

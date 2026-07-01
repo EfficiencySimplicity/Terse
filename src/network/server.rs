@@ -9,12 +9,15 @@ use indent_write::fmt::IndentWriter;
 
 // RIP: use std::borrow::Borrow; I have no idea why you even existed or if I even wrote you.
 
-use serde::{Deserialize};
+use serde::{Serialize, Deserialize};
 
 use crate::posts::Post;
 
 
 // NOTE: In the end, this should be async so it don't block the TUI
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(from="ServerSerializer")]
+#[serde(into="ServerSerializer")]
 pub struct Server {   
     pub(crate) url: Url, 
     pub(crate) client: Client,
@@ -103,6 +106,24 @@ impl Display for Server {
             writeln!(i, "{}", account)?;
         }
         Ok(())
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ServerSerializer {
+    pub url: String,
+    pub accounts: Vec<Account>,
+}
+
+impl From<ServerSerializer> for Server {
+    fn from(value: ServerSerializer) -> Self {
+        Self::with_accounts(Url::parse(&value.url).expect("Could not parse server!"), value.accounts)
+    }
+}
+
+impl Into<ServerSerializer> for Server {
+    fn into(self) -> ServerSerializer {
+        ServerSerializer { url: String::from(self.url.as_str()), accounts: self.accounts.clone() }
     }
 }
 
