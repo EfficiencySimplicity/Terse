@@ -1,39 +1,19 @@
-use crate::network::{Server, ServerValidityError};
-
 use directories::ProjectDirs;
-use std::{fs::*, path::PathBuf};
-use std::fmt::Display;
-
-use indoc::indoc;
-
-use url::Url;
+use std::fs::*;
+use std::path::PathBuf;
 
 use serde::{Serialize, Deserialize};
+
+use crate::network::{Server, ServerValidityError};
+use url::Url;
+
+use std::fmt::Display;
+use indoc::indoc;
 
 use anyhow::Error;
 
 
-#[derive(Serialize, Deserialize)]
-pub struct ServerListSerializer {
-    pub servers: Vec<Server>,
-    pub selected: Option<usize>,
-}
-
-impl From<ServerListSerializer> for ServerList {
-    fn from(value: ServerListSerializer) -> Self {
-        ServerList { servers: value.servers, selected: value.selected }
-    }
-        // https://stackoverflow.com/questions/63798662/how-do-i-convert-a-vecresultt-e-to-resultvect-e
-        // Ok(ServerList { servers: self.servers.into_iter().map(Server::from).collect::<Result<Vec<Server>, Error>>()? }
-}
-
-impl Into<ServerListSerializer> for ServerList {
-    fn into(self) -> ServerListSerializer {
-        ServerListSerializer { servers: self.servers.clone(), selected: self.selected }
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Default, Clone, Serialize, Deserialize)]
 #[serde(from="ServerListSerializer")]
 #[serde(into="ServerListSerializer")]
 pub struct ServerList {
@@ -52,14 +32,33 @@ impl Display for ServerList {
 }
 
 impl ServerList {
-    pub fn empty() -> Self {
-        return Self { servers: vec![], selected: None }
-    }
-
     pub fn selected(&mut self) -> Option<&mut Server> {
         return self.selected.map(|x| &mut self.servers[x as usize])
     }
+
+    pub fn get_config_file() -> Result<PathBuf, SerializationError> {
+
+        // https://stackoverflow.com/questions/37890405/is-there-a-way-to-simplify-converting-an-option-into-a-result-without-a-macro
+        let dirs = ProjectDirs::from("", "InsanityOnAMachine", "Terse").ok_or(SerializationError::BadFilesystemConfig)?;
+        let servers_file = dirs.data_dir().join("servers");
+
+        // We try to create the path of folders leading to the servers file;
+        // This could be handled by an install script one day so we don't need to check 
+        // every time Terse is run
+        std::fs::create_dir_all(
+            servers_file.parent()
+            .expect("The storage file path I tried had no parent, IMPOSSIBLE. Your system is haunted! Scary!")
+        ).or(Err(SerializationError::CouldntCreateFile))?;
+
+        return Ok(servers_file)
+    }
     
+    // TODO: SerializationError::CouldntCreateFile...
+    // It shouldn't cause too much trouble but I recently removed some of it's verbosity
+    // (see nearest expect() above)
+    // And now I see that from_config file tries to create it, and it returns an Error
+    // instead of what's useful...
+
     pub fn from_config_file() -> Result<ServerList, Error> {
         let servers_file = Self::get_config_file()?;
 
@@ -71,7 +70,7 @@ impl ServerList {
                 // Also, can serde just read from file?
                 println!("Reading config file...");
                 match string.as_str() {
-                    "" => return Ok(Self::empty()),
+                    "" => return Ok(Self::default()),
                     _ => return Ok(serde_json::from_str::<ServerList>(&string)?.into()),
                 }
             }
@@ -81,24 +80,6 @@ impl ServerList {
                 return Self::from_config_file();
             }
         }
-    }
-
-    pub fn get_config_file() -> Result<PathBuf, SerializationError> {
-        // https://stackoverflow.com/questions/37890405/is-there-a-way-to-simplify-converting-an-option-into-a-result-without-a-macro
-        let dirs = ProjectDirs::from("", "InsanityOnAMachine", "Terse").ok_or(SerializationError::BadFilesystemConfig)?;
-        let data_dir = dirs.data_dir();
-        let servers_file = data_dir.join("servers");
-
-        std::fs::create_dir_all(
-            servers_file.parent()
-            .ok_or(SerializationError::CouldntCreateFile(
-                Error::msg("The storage file path I tried had no parent, IMPOSSIBLE. Your system is haunted! Scary!")
-            ))?
-        )
-        .or(Err(SerializationError::CouldntCreateFile(
-            Error::msg("I couldn't create the path to the storage file")
-        )))?;
-        return Ok(servers_file)
     }
 
     pub fn add_server(&mut self, url: Url) -> Result<(), AddServerError> {        
@@ -151,13 +132,31 @@ impl ServerList {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct ServerListSerializer {
+    pub servers: Vec<Server>,
+    pub selected: Option<usize>,
+}
+
+impl From<ServerListSerializer> for ServerList {
+    fn from(value: ServerListSerializer) -> Self {
+        ServerList { servers: value.servers, selected: value.selected }
+    }
+}
+
+impl Into<ServerListSerializer> for ServerList {
+    fn into(self) -> ServerListSerializer {
+        ServerListSerializer { servers: self.servers.clone(), selected: self.selected }
+    }
+}
+
 #[derive(thiserror::Error, Debug)]
 pub enum SerializationError {
     // https://docs.rs/directories/latest/directories/struct.ProjectDirs.html#method.from
     #[error("I couldn't decide where to look for the storage file, I couldn't find a $HOME base")]
     BadFilesystemConfig,
-    #[error("I couldn't find the storage file, and I had trouble creating it:\n{0}")]
-    CouldntCreateFile(Error),
+    #[error("I couldn't find the storage file, and I couldn't create it and all the parent folders it needed")]
+    CouldntCreateFile,
     #[error("I tried to read the storage file, but it contained bad data")]
     BadDataInFile,
     #[error("I couldn't successfully turn the data into JSON to save it in the storage file.\nThis shouldn't ever happen, lucky you!")]
@@ -197,4 +196,3 @@ impl From<SerializationError> for AddServerError {
         Self::SerializationError(value)
     }
 }
-// Literally window and widget can both be implemented already...
