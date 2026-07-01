@@ -1,10 +1,10 @@
-use clap::{Parser, Subcommand, Args};
+use clap::{Parser, Subcommand};
 use anyhow::Error;
 use url::Url;
 
 use std::path::PathBuf;
 
-use crate::storage::ServerList;
+use crate::network::ServerList;
 use crate::tui::App;
 use crate::queries::{SearchMenu, SearchResults};
 use crate::posts::Post;
@@ -12,6 +12,10 @@ use crate::posts::Post;
 // https://docs.rs/clap/latest/clap/_derive/
 // TODO: -s hand commands
 // TODO: help
+// NOTE: I could move stats into the server and so go --server stats?...
+
+// This helped me get a Vec<String> into an enum:
+// https://github.com/clap-rs/clap/blob/master/examples/tutorial_derive/03_04_subcommands.rs
 
 #[derive(Parser)]
 pub enum Cli {
