@@ -32,16 +32,30 @@ pub enum ServerSubcommand {
     List,
 }
 
+// Vec<String> seems to be unparseable by default
+#[derive(Args)]
+pub struct Query {
+    pub words: Vec<String>,
+}
+
 impl Cli {
     pub fn from_args() -> Self {
+
+        // if the first argument isn't a flag (doesn't start with -)
+        // that's a shortcut for searching; so we insert a --search command
+        // and parse from it, for your convenience!
+
         if let Some(command) = std::env::args().nth(1) {
+
             // Why does pythonexamples.org have rust tutorials?!
             // https://pythonexamples.org/rust/how-to-get-first-n-characters-in-string
             // https://www.dotnetperls.com/starts-with-rust
+
             if !command.starts_with("-") {
                 // search shortcut! Stick a --search in there and parse it!
                 let mut search_insert = std::env::args().into_iter().collect::<Vec<String>>();
                 search_insert.insert(1, "--search".to_string());
+
                 return Self::parse_from(search_insert);
             }
         }
@@ -51,19 +65,21 @@ impl Cli {
 
     pub fn process(self) {
         match self {
-            Cli::Query(query) => Self::process_query(query.words),
-            Cli::Stats => Self::process_stats(),
+            Cli::Query(query)      => Self::process_query(query.words),
+            Cli::Stats             => Self::process_stats(),
             Cli::Pub {title, path} => Self::process_pub(title, path),
-            Cli::Server(command) => command.process(),
+            Cli::Server(command)   => command.process(),
         }
     }
 
     fn process_query(words: Vec<String>) {
+
         // A note on the terminology; if these two are one line,
-        // we get a Temporary value dropped while borrowed error;
+        // we get a 'temporary value dropped while borrowed' error;
         // https://stackoverflow.com/questions/71626083/error-e0716-temporary-value-dropped-while-borrowed
         // Which I believe is due to shaky knowledge of &mut and stuff
         // when making the selected() function in ServerList...
+
         let mut server_list = ServerList::from_config_file().unwrap();
         let server = server_list.selected().unwrap();
         let results = server.search(words);
@@ -90,23 +106,24 @@ impl Cli {
         let content = std::fs::read_to_string(&path);
         
         match content {
-            Err(_) => {println!("Path not readable"); return}
+            Err(_) => {println!("I wasn't able to read anything from that path"); return}
             _ => {}
         }
 
         // TODO: Is there a better way to manage content with the above match
         // to avoid unwrapping?
-        let post = Post {title, content: content.unwrap()};
+        let post = Post {title: title.clone(), content: content.unwrap()};
 
         let mut server_list = ServerList::from_config_file().unwrap();
         let server = server_list.selected().unwrap();
         // TODO: if Post gets a user field, we'll need to create the post in-server;
         // might not know what account you're in!
+        // would mean an Option<user> for the best bet, I guess
         let results = server.publish(post);
 
         match results {
-            Ok(_) => println!("Post published successfully!"),
-            Err(e) => println!("Error in publishing post: {e}")
+            Ok(_) => println!("I was able to publish your post, \"{title}\""),
+            Err(e) => println!("I got an error when trying to publish your post: {e}")
         }
     }
 }
@@ -116,36 +133,22 @@ impl ServerSubcommand {
         match self {
             Self::Add { url } => {
                 match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.add_server(url.clone())?)}() {
-                    Ok(_) => println!("Successfully added server {url}!"),
+                    Ok(_) => println!("I successfully added {url} to the list of servers!"),
                     Err(e) => println!("{e}")
                 }
             }
             Self::List => {
                 match || -> Result<(), Error> {Ok(println!("{}", ServerList::from_config_file()?))}() {
-                    Err(e) => println!("Error in listing servers: {e}"),
+                    Err(e) => println!("I got an error when trying to list servers: {e}"),
                     _ => {},
                 }
             }
             Self::Remove { url } => {
                 match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.remove_server(url.clone())?)}() {
-                    Ok(_) => println!("I successfully removed the server {}", url),
+                    Ok(_) => println!("I successfully removed the {} from the list of servers", url),
                     Err(e) => println!("{e}"),
                 }
             }
         }
     }
 }
-
-#[derive(Args)]
-pub struct Query {
-    pub words: Vec<String>,
-}
-// #[derive(Parser, Debug)]
-// pub struct QueryCli {
-//     #[clap(num_args = 1.., value_delimiter = ' ')]
-//     pub query: Vec<String>,
-// }
-
-// https://github.com/clap-rs/clap/discussions/5725
-
-// https://stackoverflow.com/questions/76315540/how-do-i-require-one-of-the-two-clap-options
