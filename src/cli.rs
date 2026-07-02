@@ -68,10 +68,10 @@ impl Cli {
             Cli::Stats             => Self::process_stats(),
             Cli::Pub {title, path} => Self::process_pub(title, path),
             Cli::Server(command)   => command.process(),
-        }
+        }.inspect_err(|e| println!("{e}")).ok();
     }
 
-    fn process_query(words: Vec<String>) {
+    fn process_query(words: Vec<String>) -> Result<(), Error> {
 
         // A note on the terminology; if these two are one line,
         // we get a 'temporary value dropped while borrowed' error;
@@ -79,82 +79,64 @@ impl Cli {
         // Which I believe is due to shaky knowledge of &mut and stuff
         // when making the selected() function in ServerList...
 
-        let mut server_list = ServerList::from_config_file().unwrap();
-        let server = server_list.selected().unwrap();
-        let results = server.search(words);
+        let mut server_list = ServerList::from_config_file()?;
+        let server = server_list.selected()?;
+        let results = server.search(words)?;
 
-        match results {
-            Ok(r) => {App::default().run(&mut SearchMenu::new(SearchResults::new(&server, r))).unwrap()}
-            Err(e) => {println!("Error: {e}")}
-        }
+        App::default().run(&mut SearchMenu::new(SearchResults::new(&server, results)))?;
+        Ok(())
     }
 
-    fn process_stats() {
-        let mut server_list = ServerList::from_config_file().unwrap();
-        let server = server_list.selected().unwrap();
-        let results = server.get_stats();
-
-        match results {
-            Ok(stats) => {println!("{stats}")}
-            Err(e) => {println!("Error in getting stats: {e}")}
-        }
-    }
-
-    fn process_pub(title: String, path: PathBuf) {
-
-        let content = std::fs::read_to_string(&path);
+    fn process_stats() -> Result<(), Error> {
+        let mut server_list = ServerList::from_config_file()?;
+        let server = server_list.selected()?;
+        let stats = server.get_stats()?;
         
-        match content {
-            Err(_) => {println!("I wasn't able to read anything from that path"); return}
-            _ => {}
-        }
+        println!("{stats}");
+        Ok(())
+    }
+
+    // Maybe make custom errors for publishing, etc etc etc...
+    fn process_pub(title: String, path: PathBuf) -> Result<(), Error> {
+
+        let content = std::fs::read_to_string(&path)?;
 
         // TODO: Is there a better way to manage content with the above match
         // to avoid unwrapping?
-        let post = Post {title: title.clone(), content: content.unwrap()};
+        let post = Post {title: title.clone(), content: content};
 
-        let mut server_list = ServerList::from_config_file().unwrap();
-        let server = server_list.selected().unwrap();
+        let mut server_list = ServerList::from_config_file()?;
+        let server = server_list.selected()?;
         // TODO: if Post gets a user field, we'll need to create the post in-server;
         // might not know what account you're in!
         // would mean an Option<user> for the best bet, I guess
-        let results = server.publish(post);
+        server.publish(post)?;
 
-        match results {
-            Ok(_) => println!("I was able to publish your post, \"{title}\""),
-            Err(e) => println!("I got an error when trying to publish your post: {e}")
-        }
+        println!("I was able to publish your post, \"{title}\"");
+        Ok(())
     }
 }
 
 impl ServerSubcommand {
-    fn process(self) {
+    fn process(self) -> Result<(), Error> {
         match self {
             Self::Add { url } => {
-                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.add_server(url.clone())?)}() {
-                    Ok(_) => println!("I successfully added {url} to the list of servers!"),
-                    Err(e) => println!("{e}")
-                }
+                ServerList::from_config_file()?.add_server(url.clone())?;
+                println!("I successfully added {url} to the list of servers!");
             }
             Self::Remove { url } => {
-                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.remove_server(url.clone())?)}() {
-                    Ok(_) => println!("I successfully removed {} from the list of servers", url),
-                    Err(e) => println!("{e}"),
-                }
+                ServerList::from_config_file()?.remove_server(url.clone())?;
+                println!("I successfully removed {} from the list of servers", url);
             }
             Self::Set { idx } => {
-                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.set_server(idx)?)}() {
-                    // When this has additional info it'll be good to print it!
-                    Ok(_) => println!("I successfully set the server to {idx}: "),
-                    Err(e) => println!("{e}"),
-                }
+                ServerList::from_config_file()?.set_server(idx)?;
+                // When this has additional info it'll be good to print it!
+                println!("I successfully set the server to {idx}: ");
             }
             Self::List => {
-                match || -> Result<(), Error> {Ok(println!("{}", ServerList::from_config_file()?))}() {
-                    Err(e) => println!("I got an error when trying to list servers: {e}"),
-                    _ => {},
-                }
+                println!("{}", ServerList::from_config_file()?);
             }
         }
+        Ok(())
     }
 }

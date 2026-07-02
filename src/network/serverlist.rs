@@ -31,8 +31,9 @@ impl std::fmt::Display for ServerList {
 }
 
 impl ServerList {
-    pub fn selected(&mut self) -> Option<&mut Server> {
-        return self.selected.map(|x| &mut self.servers[x as usize])
+    pub fn selected(&mut self) -> Result<&mut Server, SelectedServerError> {
+        // This should explicitly check for no servers...
+        return self.selected.map(|x| &mut self.servers[x as usize]).ok_or(SelectedServerError::NoServers)
     }
 
     // If this returns Ok, the storage file is guaranteed to exist
