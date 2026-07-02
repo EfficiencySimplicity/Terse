@@ -36,25 +36,33 @@ impl ServerList {
         return self.selected.map(|x| &mut self.servers[x as usize])
     }
 
+    // If this returns Ok, the storage file is guaranteed to exist
     pub fn get_config_file() -> Result<PathBuf, SerializationError> {
 
         // https://stackoverflow.com/questions/37890405/is-there-a-way-to-simplify-converting-an-option-into-a-result-without-a-macro
         let dirs = ProjectDirs::from("", "InsanityOnAMachine", "Terse").ok_or(SerializationError::BadFilesystemConfig)?;
         let servers_file = dirs.data_dir().join("servers");
 
-        // We try to create the path of folders leading to the servers file;
-        // This could be handled by an install script one day so we don't need to check 
-        // every time Terse is run
-        std::fs::create_dir_all(
-            servers_file.parent()
-            .expect("The storage file path I tried had no parent, IMPOSSIBLE. Your system is haunted! Scary!")
-        ).or(Err(SerializationError::CouldntCreateFile))?;
+        // https://doc.rust-lang.org/stable/std/path/struct.Path.html#method.exists
+        // Here I opt to NOT use try_exists, because if I can't verify it exists,
+        // I probably can't access it either.
+        // This could be handled by an install script one day so we don't need to check all the time
+        if !servers_file.exists() {
+
+            std::fs::create_dir_all(
+                servers_file.parent()
+                .expect("The storage file path I tried had no parent, IMPOSSIBLE. Your system is haunted! Scary!")
+            ).or(Err(SerializationError::CouldntCreateFile))?;
+
+            File::create(&servers_file)
+            .or(Err(SerializationError::CouldntCreateFile))?;
+        }
 
         return Ok(servers_file)
     }
     
     // TODO: SerializationError::CouldntCreateFile...
-    // It shouldn't cause too much trouble but I recently removed some of it's verbosity
+    // It shouldn't cause too much trouble but I recently removed some of its verbosity
     // (see nearest expect() above)
     // And now I see that from_config file tries to create it, and it returns an Error
     // instead of what's useful...
@@ -62,30 +70,22 @@ impl ServerList {
     pub fn from_config_file() -> Result<ServerList, Error> {
         let servers_file = Self::get_config_file()?;
 
-        // NOTE: there are notes saying you should use try_exists() sometimes.
-        match &mut std::fs::read_to_string(&servers_file) {
-            Ok(string) => {
-                // NOTE: This could be a std::io::BufReader that wraps f;
-                // Would that be any better?
-                // Also, can serde just read from file?
-                println!("Reading config file...");
-                match string.as_str() {
-                    "" => return Ok(Self::default()),
-                    _ => return Ok(serde_json::from_str::<ServerList>(&string)?.into()),
-                }
-            }
-            Err(_) => {
-                println!("Creating file...");
-                File::create(&servers_file)?;
-                return Self::from_config_file();
-            }
+        // NOTE: This could be a std::io::BufReader that wraps f;
+        // Would that be any better?
+        // Also, can serde just read from file?
+
+        let string = std::fs::read_to_string(&servers_file)?;
+
+        match string.as_str() {
+            "" => return Ok(Self::default()),
+            _  => return Ok(serde_json::from_str::<ServerList>(&string)?.into()),
         }
     }
 
     pub fn add_server(&mut self, url: Url) -> Result<(), AddServerError> {        
         // Sometimes different urls redirect to the same url in the end;
         // I feel like this should be allowed, Terse should just assume
-        // that redirects are two different servers.
+        // that redirects are two different servers. For whatever reason.
         if self.servers.iter().any(|x| {x.url == url}) {
             return Err(AddServerError::ServerAlreadyExists)
         }
@@ -155,7 +155,7 @@ pub enum SerializationError {
     // https://docs.rs/directories/latest/directories/struct.ProjectDirs.html#method.from
     #[error("I couldn't decide where to look for the storage file, I couldn't find a $HOME base")]
     BadFilesystemConfig,
-    #[error("I couldn't find the storage file, and I couldn't create it and all the parent folders it needed")]
+    #[error("I couldn't find the storage file, and I couldn't create a new file at the path where it should be")]
     CouldntCreateFile,
     #[error("I tried to read the storage file, but it contained bad data")]
     BadDataInFile,
