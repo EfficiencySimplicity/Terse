@@ -4,11 +4,8 @@ use std::path::PathBuf;
 
 use serde::{Serialize, Deserialize};
 
-use crate::network::{Server, ServerValidityError};
+use crate::network::Server;
 use url::Url;
-
-use std::fmt::Display;
-use indoc::indoc;
 
 use anyhow::Error;
 
@@ -21,12 +18,14 @@ pub struct ServerList {
     pub selected: Option<usize>,
 }
 
-impl Display for ServerList {
+impl std::fmt::Display for ServerList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Servers: {}", self.servers.len())?;
+
         for server in &self.servers {
             writeln!(f, "{}", server)?;
         }
+
         Ok(())
     }
 }
@@ -40,7 +39,8 @@ impl ServerList {
     pub fn get_config_file() -> Result<PathBuf, SerializationError> {
 
         // https://stackoverflow.com/questions/37890405/is-there-a-way-to-simplify-converting-an-option-into-a-result-without-a-macro
-        let dirs = ProjectDirs::from("", "InsanityOnAMachine", "Terse").ok_or(SerializationError::BadFilesystemConfig)?;
+        let dirs = ProjectDirs::from("", "InsanityOnAMachine", "Terse")
+            .ok_or(SerializationError::BadFilesystemConfig)?;
         let servers_file = dirs.data_dir().join("servers");
 
         // https://doc.rust-lang.org/stable/std/path/struct.Path.html#method.exists
@@ -49,10 +49,13 @@ impl ServerList {
         // This could be handled by an install script one day so we don't need to check all the time
         if !servers_file.exists() {
 
-            std::fs::create_dir_all(
-                servers_file.parent()
-                .expect("The storage file path I tried had no parent, IMPOSSIBLE. Your system is haunted! Scary!")
-            ).or(Err(SerializationError::CouldntCreateFile))?;
+            match servers_file.parent() {
+                Some(folder_url) => {
+                    std::fs::create_dir_all(folder_url)
+                    .or(Err(SerializationError::CouldntCreateFile))?;
+                }
+                _ => {}
+            }
 
             File::create(&servers_file)
             .or(Err(SerializationError::CouldntCreateFile))?;
@@ -60,12 +63,6 @@ impl ServerList {
 
         return Ok(servers_file)
     }
-    
-    // TODO: SerializationError::CouldntCreateFile...
-    // It shouldn't cause too much trouble but I recently removed some of its verbosity
-    // (see nearest expect() above)
-    // And now I see that from_config file tries to create it, and it returns an Error
-    // instead of what's useful...
 
     pub fn from_config_file() -> Result<ServerList, Error> {
         let servers_file = Self::get_config_file()?;
@@ -82,12 +79,13 @@ impl ServerList {
         }
     }
 
-    pub fn add_server(&mut self, url: Url) -> Result<(), AddServerError> {        
+    pub fn add_server(&mut self, url: Url) -> Result<(), Error> {
+
         // Sometimes different urls redirect to the same url in the end;
         // I feel like this should be allowed, Terse should just assume
         // that redirects are two different servers. For whatever reason.
         if self.servers.iter().any(|x| {x.url == url}) {
-            return Err(AddServerError::ServerAlreadyExists)
+            Err(AddServerError::ServerAlreadyExists)?
         }
 
         let server = Server::new(url);
@@ -104,21 +102,15 @@ impl ServerList {
     pub fn remove_server(&mut self, url: Url) -> Result<(), Error> {
         
         if self.servers.iter().all(|x| {x.url != url}) {
-            return Err(Error::msg(
-                format!(
-                    indoc! {
-                        "I couldn't find a server named {} in the list; 
-                        Try running --server list to see all the servers you have",
-                    },
-                    url
-                )
-            ))
+            Err(RemoveServerError::ServerNotInList)?
         }
     
         self.servers.retain(|x| {x.url != url});
+
         if self.servers.len() == 0 { self.selected = None } else
-        if self.selected.expect("If the length of the server list is non-zero, the selected element should be Some") 
+        if self.selected.expect("The selected element should be Some, since the length of the server list is non-zero") 
         > self.servers.len() - 1 { self.selected = Some(self.servers.len() - 1) }
+
         return Ok(self.store()?);
     }
 
@@ -168,31 +160,12 @@ pub enum SerializationError {
 // https://stackoverflow.com/questions/48430836/rust-proper-error-handling-auto-convert-from-one-error-type-to-another-with-que
 #[derive(thiserror::Error, Debug)]
 pub enum AddServerError {
-    #[error("I wasn't able to parse the url")]
-    CantParseUrl,
-    #[error("I had a problem with storage;\n{0}")]
-    SerializationError(SerializationError),
     #[error("You already have that server saved")]
     ServerAlreadyExists,
-    #[error("I wasn't able to add the server;\n{0}")]
-    Other(Error)
 }
 
-// https://burntsushi.net/rust-error-handling/#the-from-trait
-impl From<url::ParseError> for AddServerError {
-    fn from(value: url::ParseError) -> Self {
-        Self::CantParseUrl
-    }
-}
-
-impl From<ServerValidityError> for AddServerError {
-    fn from(value: ServerValidityError) -> Self {
-        Self::Other(Error::from(value))
-    }
-}
-
-impl From<SerializationError> for AddServerError {
-    fn from(value: SerializationError) -> Self {
-        Self::SerializationError(value)
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum RemoveServerError {
+    #[error("I couldn't find the server you wanted to remove in the list;\nTry running --server list to see all the servers you have")]
+    ServerNotInList
 }

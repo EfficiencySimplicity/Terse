@@ -156,7 +156,7 @@ impl Display for ServerStats {
 #[derive(thiserror::Error, Debug)]
 pub enum ServerValidityError {
     // No contact at all; the site doesn't exist
-    #[error("I can't connect to the server")]
+    #[error("I couldn't connect to the server")]
     CannotConnect,
     // There's no /exists-and-is-a-terse-server path
     #[error("The server isn't a Terse server")]
