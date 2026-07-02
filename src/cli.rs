@@ -20,7 +20,7 @@ use crate::posts::Post;
 #[derive(Parser)]
 pub enum Cli {
     #[command(name = "--search")]
-    Query {query: Vec<String>},
+    Search {query: Vec<String>},
     #[command(name = "--stats")]
     Stats,
     #[command(name = "--pub")]
@@ -33,6 +33,7 @@ pub enum Cli {
 pub enum ServerSubcommand {
     Add {url: Url},
     Remove {url: Url},
+    Set { idx: usize },
     List,
 }
 
@@ -63,7 +64,7 @@ impl Cli {
 
     pub fn process(self) {
         match self {
-            Cli::Query {query}     => Self::process_query(query),
+            Cli::Search {query}    => Self::process_query(query),
             Cli::Stats             => Self::process_stats(),
             Cli::Pub {title, path} => Self::process_pub(title, path),
             Cli::Server(command)   => command.process(),
@@ -135,16 +136,23 @@ impl ServerSubcommand {
                     Err(e) => println!("{e}")
                 }
             }
+            Self::Remove { url } => {
+                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.remove_server(url.clone())?)}() {
+                    Ok(_) => println!("I successfully removed {} from the list of servers", url),
+                    Err(e) => println!("{e}"),
+                }
+            }
+            Self::Set { idx } => {
+                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.set_server(idx)?)}() {
+                    // When this has additional info it'll be good to print it!
+                    Ok(_) => println!("I successfully set the server to {idx}: "),
+                    Err(e) => println!("{e}"),
+                }
+            }
             Self::List => {
                 match || -> Result<(), Error> {Ok(println!("{}", ServerList::from_config_file()?))}() {
                     Err(e) => println!("I got an error when trying to list servers: {e}"),
                     _ => {},
-                }
-            }
-            Self::Remove { url } => {
-                match || -> Result<(), Error> {Ok(ServerList::from_config_file()?.remove_server(url.clone())?)}() {
-                    Ok(_) => println!("I successfully removed the {} from the list of servers", url),
-                    Err(e) => println!("{e}"),
                 }
             }
         }

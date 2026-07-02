@@ -79,6 +79,15 @@ impl ServerList {
         }
     }
 
+    pub fn store(&self) -> Result<(), SerializationError> {
+        // TODO: serde_json::to_writer takes a Write-able; try using it?
+        let storage_file = Self::get_config_file()?;
+        let json_string = serde_json::to_string(self).or(Err(SerializationError::CantSerializeSelf))?;
+
+        write(storage_file, json_string).or(Err(SerializationError::CantWriteToFile))?;
+        Ok(())
+    }
+
     pub fn add_server(&mut self, url: Url) -> Result<(), Error> {
 
         // Sometimes different urls redirect to the same url in the end;
@@ -114,13 +123,16 @@ impl ServerList {
         return Ok(self.store()?);
     }
 
-    pub fn store(&self) -> Result<(), SerializationError> {
-        // TODO: serde_json::to_writer takes a Write-able; try using it?
-        let storage_file = Self::get_config_file()?;
-        let json_string = serde_json::to_string(self).or(Err(SerializationError::CantSerializeSelf))?;
-
-        write(storage_file, json_string).or(Err(SerializationError::CantWriteToFile))?;
-        Ok(())
+    // NOTE: maybe return the selected server?
+    pub fn set_server(&mut self, idx: usize) -> Result<(), SelectedServerError> {
+        if self.servers.is_empty() {
+            Err(SelectedServerError::NoServers)
+        } else if idx >= self.servers.len() {
+            Err(SelectedServerError::OutOfBounds{ idx, max: self.servers.len() - 1})
+        } else {
+            self.selected = Some(idx);
+            Ok(())
+        }
     }
 }
 
@@ -140,6 +152,15 @@ impl Into<ServerListSerializer> for ServerList {
     fn into(self) -> ServerListSerializer {
         ServerListSerializer { servers: self.servers.clone(), selected: self.selected }
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum SelectedServerError {
+    #[error("You don't have any servers; add one with `trs --server add https://url-to-a-terse-server`")]
+    NoServers,
+    // max should be servers.len() - 1; the max index available
+    #[error("You don't have a server with index {idx}; try an index from 0-{max}")]
+    OutOfBounds {idx: usize, max: usize}
 }
 
 #[derive(thiserror::Error, Debug)]
