@@ -4,10 +4,9 @@ use url::Url;
 
 use std::path::PathBuf;
 
-use crate::network::ServerList;
 use crate::tui::App;
-use crate::queries::{SearchMenu, SearchResults};
-use crate::network::server::Post;
+use crate::posts::Post;
+use crate::network::{ServerList, SearchMenu, SearchResults};
 
 // https://docs.rs/clap/latest/clap/_derive/
 // TODO: -s hand commands

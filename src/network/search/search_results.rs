@@ -1,0 +1,59 @@
+use crossterm::event::KeyCode;
+
+use crate::tui::{self, Window};
+use crate::network::{Server, SearchResult};
+use crate::posts::{Post, PostWidget};
+
+use ratatui::widgets::{Widget, StatefulWidget, List, ListState};
+use ratatui::prelude::{Rect, Buffer, Modifier};
+
+use anyhow::Error;
+
+pub struct SearchResults<'a> {
+    server: &'a Server,
+    links: Vec<SearchResult>,
+    list_state: ListState,
+}
+
+impl<'a> SearchResults<'a> {
+    pub fn new(server: &'a Server, links: Vec<SearchResult>) -> Self {
+        let mut list_state = ListState::default();
+        list_state.select_first();
+
+        Self { server, links, list_state }
+    }
+
+    pub fn get_selected_article(&self) -> Result<Post, Error> {
+        // https://stackoverflow.com/questions/37890405/is-there-a-way-to-simplify-converting-an-option-into-a-result-without-a-macro
+        self.server.get_post(self.links.get(self.list_state.selected().unwrap_or(0)).unwrap().postid)
+    }
+}
+
+impl<'a> Widget for &mut SearchResults<'a> {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let container = tui::get_default_block()
+            .title_bottom("( ((j / k) + enter) or (id) to select )");
+
+        StatefulWidget::render(
+            List::new(&self.links)
+                // This can also be a style.
+                .highlight_style(Modifier::REVERSED)
+                .scroll_padding(3)
+                .block(container),
+            area,
+            buf,
+            &mut self.list_state,
+        );
+    }
+}
+
+impl<'a> Window for SearchResults<'a> {
+    fn handle_key_event(&mut self, key: KeyCode) {
+        match key {
+            // TODO: clamp after!
+            KeyCode::Char('j') => self.list_state.scroll_down_by(1),
+            KeyCode::Char('k') => self.list_state.scroll_up_by(1),
+            _ => (),
+        }
+    }
+}

@@ -1,10 +1,9 @@
 pub mod cli;
-use cli::*;
+use cli::Cli;
 
 pub mod tui;
 pub mod network;
-pub mod queries;
-
+pub mod posts;
 
 fn main() {
     let cli = Cli::from_args();

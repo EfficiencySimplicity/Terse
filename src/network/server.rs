@@ -4,7 +4,9 @@ use url::Url;
 use std::fmt::{Display, Formatter, Write};
 use bytesize::ByteSize;
 
-use crate::network::Account;
+use crate::network::{Account, SearchResult};
+use crate::posts::{Post, PostSizeError};
+
 use indent_write::fmt::IndentWriter;
 
 // RIP: use std::borrow::Borrow; I have no idea why you even existed or if I even wrote you.
@@ -12,12 +14,6 @@ use indent_write::fmt::IndentWriter;
 use serde::{Serialize, Deserialize};
 
 // https://stackoverflow.com/questions/63369629/how-can-i-split-up-a-large-impl-over-multiple-files
-pub mod search;
-pub use search::*;
-
-pub mod posts;
-pub use posts::*;
-
 
 // NOTE: In the end, this should be async so it don't block the TUI
 #[derive(Clone, Serialize, Deserialize)]
@@ -82,7 +78,7 @@ impl Server {
         match response.status() {
             StatusCode::OK => (),
             StatusCode::PAYLOAD_TOO_LARGE => {
-                return Err(response.json::<PostSizeExceptionError>()?)?;
+                return Err(response.json::<PostSizeError>()?)?;
             }
             // TODO: this needs a better error system
             other => return Err(ServerValidityError::Other(other))?
@@ -96,6 +92,14 @@ impl Server {
             self.client.get(self.with_params("stats", ""))
             .send()?
             .json::<ServerStats>()?
+        )
+    }
+
+    pub fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
+        Ok(
+            self.client.get(self.with_params("search", format!("query={}", query.join(" "))))
+            .send()?
+            .json::<Vec<SearchResult>>()?
         )
     }
 }

@@ -1,6 +1,5 @@
 use serde::Deserialize;
 use anyhow::Error;
-use super::Server;
 
 use ratatui::text::{Span, Line, Text};
 
@@ -21,15 +20,5 @@ impl<'a> From<&'a SearchResult> for Text<'a> {
         ]);
 
         return text;
-    }
-}
-
-impl Server {
-    pub fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
-        Ok(
-            self.client.get(self.with_params("search", format!("query={}", query.join(" "))))
-            .send()?
-            .json::<Vec<SearchResult>>()?
-        )
     }
 }

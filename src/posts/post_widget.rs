@@ -1,7 +1,7 @@
 use ratatui::{layout::{Constraint, Layout, Rect}, buffer::Buffer, widgets::{StatefulWidget, Widget, Scrollbar, ScrollbarOrientation, ScrollbarState, Paragraph}};
 use crossterm::event::KeyCode;
-use crate::tui::{Window, get_default_block};
-use crate::network::server::Post;
+use crate::tui::{self, Window};
+use super::Post;
 
 pub struct PostWidget {
     post: Post,
@@ -31,7 +31,7 @@ impl Widget for &mut PostWidget {
 
         // TODO: eliminate this clone() by any means necessary.
         Paragraph::new(self.post.content.clone())
-        .block(get_default_block().title_bottom("( j / k to scroll )"))
+        .block(tui::get_default_block().title_bottom("( j / k to scroll )"))
         .scroll((self.scroll_state.get_position() as u16, 0))
         .render(layout[0], buf);
 

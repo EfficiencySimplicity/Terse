@@ -13,12 +13,12 @@ pub struct Post {
 }
 
 #[derive(thiserror::Error, Deserialize, Debug)]
-pub struct PostSizeExceptionError {
+pub struct PostSizeError {
     max_post_size: u64,
     // max_title_length
 }
 
-impl Display for PostSizeExceptionError {
+impl Display for PostSizeError {
     fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
         // https://stackoverflow.com/questions/33334994/multi-line-string-in-rust-with-preserved-leading-whitespace
         writedoc!(
