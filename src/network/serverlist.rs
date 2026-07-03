@@ -50,12 +50,9 @@ impl ServerList {
         // This could be handled by an install script one day so we don't need to check all the time
         if !servers_file.exists() {
 
-            match servers_file.parent() {
-                Some(folder_url) => {
-                    std::fs::create_dir_all(folder_url)
-                    .or(Err(SerializationError::CouldntCreateFile))?;
-                }
-                _ => {}
+            if let Some(folder_path) = servers_file.parent() {
+                std::fs::create_dir_all(folder_path)
+                .or(Err(SerializationError::CouldntCreateFile))?;
             }
 
             File::create(&servers_file)
