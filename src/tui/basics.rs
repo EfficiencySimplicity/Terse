@@ -22,14 +22,13 @@ impl App {
                 window.render(frame.area(), frame.buffer_mut());
             })?;
 
-            match event::read()? {
-                Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
+            if let Event::Key(key_event) = event::read()? {
+                if key_event.kind == KeyEventKind::Press => {
                     match key_event.code {
                         KeyCode::Esc => self.exit = true,
                         other => window.handle_key_event(other),
                     }
                 }
-                _ => (),
             }
         }
         Ok(())
