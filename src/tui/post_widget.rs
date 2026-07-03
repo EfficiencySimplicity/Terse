@@ -1,7 +1,7 @@
 use ratatui::{layout::{Constraint, Layout, Rect}, buffer::Buffer, widgets::{StatefulWidget, Widget, Scrollbar, ScrollbarOrientation, ScrollbarState, Paragraph}};
 use crossterm::event::KeyCode;
 use crate::tui::{Window, get_default_block};
-use crate::posts::{Post};
+use crate::network::server::Post;
 
 pub struct PostWidget {
     post: Post,

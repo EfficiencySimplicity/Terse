@@ -1,4 +1,4 @@
-use reqwest::{StatusCode, blocking::{Client, Response}};
+use reqwest::{StatusCode, blocking::Client};
 use anyhow::Error;
 use url::Url;
 use std::fmt::{Display, Formatter, Write};
@@ -11,11 +11,12 @@ use indent_write::fmt::IndentWriter;
 
 use serde::{Serialize, Deserialize};
 
-use crate::posts::Post;
-
 // https://stackoverflow.com/questions/63369629/how-can-i-split-up-a-large-impl-over-multiple-files
 pub mod search;
 pub use search::*;
+
+pub mod posts;
+pub use posts::*;
 
 
 // NOTE: In the end, this should be async so it don't block the TUI
@@ -69,27 +70,25 @@ impl Server {
         )
     }
 
-    pub fn publish(&self, post: Post) -> Result<Response, Error> {
+    pub fn publish(&self, post: Post) -> Result<(), Error> {
         // https://docs.rs/reqwest/latest/reqwest/blocking/struct.RequestBuilder.html
-        Ok(
-            self.client.post(self.with_params("posts", ""))
-            .header(reqwest::header::CONTENT_TYPE, "application/json")
-            .body(serde_json::to_string(&post)?)
-            .send()?
-        )
+        
+        let response = self.client.post(self.with_params("posts", ""))
+        .header(reqwest::header::CONTENT_TYPE, "application/json")
+        .body(serde_json::to_string(&post)?)
+        .send()?;
+        
+        // https://docs.rs/reqwest/latest/reqwest/struct.StatusCode.html
+        match response.status() {
+            StatusCode::OK => (),
+            StatusCode::PAYLOAD_TOO_LARGE => {
+                return Err(response.json::<PostSizeExceptionError>()?)?;
+            }
+            // TODO: this needs a better error system
+            other => return Err(ServerValidityError::Other(other))?
+        }
 
-        // match result {
-        //     // https://docs.rs/reqwest/latest/reqwest/struct.StatusCode.html
-        //     Ok(response) => match response.status().as_u16() {
-        //         413 => {
-        //             let err = response.json::<PostSizeExceptionError>()?;
-        //             println!("{err}");
-        //         }
-        //         _ => println!("Answer published successfully"),
-        //     }
-        //     Err(err) => println!("Error in sending post: {err}")
-        // }
-        // Ok(())
+        Ok(())
     }
 
     pub fn get_stats(&self) -> Result<ServerStats, Error> {

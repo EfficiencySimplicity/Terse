@@ -1,7 +1,6 @@
 pub mod cli;
 use cli::*;
 
-pub mod posts;
 pub mod tui;
 pub mod network;
 pub mod queries;

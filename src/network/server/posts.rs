@@ -12,7 +12,7 @@ pub struct Post {
     pub content: String,
 }
 
-#[derive(Deserialize)]
+#[derive(thiserror::Error, Deserialize, Debug)]
 pub struct PostSizeExceptionError {
     max_post_size: u64,
     // max_title_length
