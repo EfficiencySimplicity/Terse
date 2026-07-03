@@ -4,6 +4,8 @@ use std::fmt::Formatter;
 use std::fmt::Display;
 use indoc::writedoc;
 
+// This could all be in network, in posts or publishing, etc...
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Post {
     pub title: String,

@@ -33,7 +33,7 @@ pub enum Cli {
 pub enum ServerSubcommand {
     Add {url: Url},
     Remove {url: Url},
-    Set { idx: usize },
+    Set {idx: usize},
     List,
 }
 
@@ -68,7 +68,9 @@ impl Cli {
             Cli::Stats             => Self::process_stats(),
             Cli::Pub {title, path} => Self::process_pub(title, path),
             Cli::Server(command)   => command.process(),
-        }.inspect_err(|e| println!("{e}")).ok();
+        }
+        .inspect_err(|e| println!("{e}"))
+        .ok();
     }
 
     fn process_query(words: Vec<String>) -> Result<(), Error> {

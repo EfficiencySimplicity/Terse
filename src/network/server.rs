@@ -23,7 +23,7 @@ pub use search::*;
 #[serde(from="ServerSerializer")]
 #[serde(into="ServerSerializer")]
 pub struct Server {   
-    pub(crate) url: Url, 
+    pub(super) url: Url, 
     client: Client,
     accounts: Vec<Account>,
 }
