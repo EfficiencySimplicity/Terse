@@ -1,6 +1,5 @@
 use crate::tui::{self, Window};
 use crate::network::Server;
-use super::SearchResult;
 use crate::posts::Post;
 
 use ratatui::widgets::{Widget, StatefulWidget, List, ListState};
