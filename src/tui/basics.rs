@@ -23,7 +23,7 @@ impl App {
             })?;
 
             if let Event::Key(key_event) = event::read()? {
-                if key_event.kind == KeyEventKind::Press => {
+                if let KeyEventKind::Press = key_event.kind {
                     match key_event.code {
                         KeyCode::Esc => self.exit = true,
                         other => window.handle_key_event(other),
