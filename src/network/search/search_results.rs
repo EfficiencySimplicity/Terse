@@ -2,7 +2,7 @@ use crossterm::event::KeyCode;
 
 use crate::tui::{self, Window};
 use crate::network::{Server, SearchResult};
-use crate::posts::{Post, PostWidget};
+use crate::posts::Post;
 
 use ratatui::widgets::{Widget, StatefulWidget, List, ListState};
 use ratatui::prelude::{Rect, Buffer, Modifier};

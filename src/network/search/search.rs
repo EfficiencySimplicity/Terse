@@ -1,5 +1,4 @@
 use serde::Deserialize;
-use anyhow::Error;
 
 use ratatui::text::{Span, Line, Text};
 

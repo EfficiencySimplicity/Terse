@@ -1,15 +1,13 @@
 use crate::tui::{self, Window};
-use crate::network::{Server, SearchResult, SearchResults};
-use crate::posts::{Post, PostWidget};
+use crate::network::SearchResults;
+use crate::posts::PostWidget;
 
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
-    style::Modifier,
-    widgets::{List, ListState, StatefulWidget, Widget},
+    widgets::Widget,
 };
 
-use anyhow::Error;
 
 use crossterm::event::KeyCode;
 
