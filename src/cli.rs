@@ -101,7 +101,10 @@ impl Cli {
     // Maybe make custom errors for publishing, etc etc etc...
     fn process_pub(title: String, path: PathBuf) -> Result<(), Error> {
 
-        let content = std::fs::read_to_string(&path)?;
+        // There could be a wrapper for fs errors that provides better printing
+        // 'I couldn't read the path' is good enough, and after a semicolon; great!
+        let content = std::fs::read_to_string(&path)
+            .or(Err(Error::msg("I couldn't read the path you gave me")))?;
 
         // TODO: Is there a better way to manage content with the above match
         // to avoid unwrapping?
