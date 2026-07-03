@@ -1,13 +1,37 @@
-use crossterm::event::KeyCode;
-
 use crate::tui::{self, Window};
-use crate::network::{Server, SearchResult};
+use crate::network::Server;
+use super::SearchResult;
 use crate::posts::Post;
 
 use ratatui::widgets::{Widget, StatefulWidget, List, ListState};
+use ratatui::text::{Span, Line, Text};
 use ratatui::prelude::{Rect, Buffer, Modifier};
 
+use crossterm::event::KeyCode;
+
+use serde::Deserialize;
+
 use anyhow::Error;
+
+#[derive(Deserialize, Debug)]
+pub struct SearchResult {
+    pub title: String,
+    pub postid: u16,
+}
+
+// https://www.reddit.com/r/rust/comments/7zm0j2/intofrom_for_nonconsuming_conversions/
+impl<'a> From<&'a SearchResult> for Text<'a> {
+    fn from(value: &'a SearchResult) -> Self {
+        let text = Text::from(vec![
+            Line::from(" "),
+            Line::from(Span::from(&value.title)),
+            //Line::from(value.author.clone()).red(),
+            Line::from(" "),
+        ]);
+
+        return text;
+    }
+}
 
 pub struct SearchResults<'a> {
     server: &'a Server,

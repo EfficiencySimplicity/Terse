@@ -1,5 +1,5 @@
 use crate::tui::{self, Window};
-use crate::network::SearchResults;
+use super::SearchResults;
 use crate::posts::PostWidget;
 
 use ratatui::{
@@ -7,7 +7,6 @@ use ratatui::{
     layout::Rect,
     widgets::Widget,
 };
-
 
 use crossterm::event::KeyCode;
 

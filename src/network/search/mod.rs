@@ -1,6 +1,3 @@
-pub mod search;
-pub use search::*;
-
 pub mod search_menu;
 pub use search_menu::*;
 
