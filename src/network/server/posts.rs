@@ -24,7 +24,7 @@ impl Display for PostSizeExceptionError {
         writedoc!(
             f,
             "
-            Part of your Answer was too large;
+            The server rejected your post because part of it was too large;
             Make sure:
                 - The content is within {}
             ",
