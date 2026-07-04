@@ -133,9 +133,11 @@ impl ServerSubcommand {
                 println!("I successfully removed {} from the list of servers", url);
             }
             Self::Set { idx } => {
-                ServerList::from_config_file()?.set_server(idx)?;
-                // When this has additional info it'll be good to print it!
-                println!("I successfully set the server to {idx}: ");
+                let mut server_list = ServerList::from_config_file()?;
+                let server = server_list.set_server(idx)?;
+                // If this wanted more stats... I'd just not globally error;
+                // I'd say "I successfully set the server to 4: [couldn't get name]""
+                println!("I successfully set the server to {idx}: {}", server.url());
             }
             Self::List => {
                 println!("{}", ServerList::from_config_file()?);

@@ -15,7 +15,7 @@ use anyhow::Error;
 #[serde(into="ServerListSerializer")]
 pub struct ServerList {
     pub servers: Vec<Server>,
-    pub selected: Option<usize>,
+    selected: Option<usize>,
 }
 
 impl std::fmt::Display for ServerList {
@@ -91,7 +91,7 @@ impl ServerList {
         // Sometimes different urls redirect to the same url in the end;
         // I feel like this should be allowed, Terse should just assume
         // that redirects are two different servers. For whatever reason.
-        if self.servers.iter().any(|x| {x.url == url}) {
+        if self.servers.iter().any(|x| {x.url() == url}) {
             Err(AddServerError::ServerAlreadyExists)?
         }
 
@@ -108,11 +108,11 @@ impl ServerList {
 
     pub fn remove_server(&mut self, url: Url) -> Result<(), Error> {
         
-        if self.servers.iter().all(|x| {x.url != url}) {
+        if self.servers.iter().all(|x| {x.url() != url}) {
             Err(RemoveServerError::ServerNotInList)?
         }
     
-        self.servers.retain(|x| {x.url != url});
+        self.servers.retain(|x| {x.url() != url});
 
         if self.servers.len() == 0 { self.selected = None } else
         if self.selected.expect("The selected element should be Some, since the length of the server list is non-zero") 
@@ -122,14 +122,15 @@ impl ServerList {
     }
 
     // NOTE: maybe return the selected server?
-    pub fn set_server(&mut self, idx: usize) -> Result<(), Error> {
+    pub fn set_server(&mut self, idx: usize) -> Result<&mut Server, Error> {
         if self.servers.is_empty() {
             Err(SelectedServerError::NoServers)?
         } else if idx >= self.servers.len() {
             Err(SelectedServerError::OutOfBounds{ idx, max: self.servers.len() - 1})?
         } else {
             self.selected = Some(idx);
-            Ok(self.store()?)
+            self.store()?;
+            Ok(self.selected().expect("This should point to a server, of course!"))
         }
     }
 }

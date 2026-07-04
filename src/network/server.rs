@@ -20,7 +20,7 @@ use serde::{Serialize, Deserialize};
 #[serde(from="ServerSerializer")]
 #[serde(into="ServerSerializer")]
 pub struct Server {   
-    pub(super) url: Url, 
+    url: Url, 
     client: Client,
     accounts: Vec<Account>,
 }
@@ -33,6 +33,10 @@ impl Server {
     
     pub fn with_accounts(url: Url, accounts: Vec<Account>) -> Self {
         Self {url, client: Client::new(), accounts: accounts}
+    }
+
+    pub fn url(&self) -> Url {
+        self.url.clone()
     }
 
     pub fn exists_and_is_a_terse_server(&self) -> Result<(), ServerValidityError> {
