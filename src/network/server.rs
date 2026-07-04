@@ -136,23 +136,25 @@ impl Into<ServerSerializer> for Server {
 
 #[derive(Deserialize)]
 pub struct ServerStats {
+    server_name: String,
     version: String,
     users: u32,
     posts: u32,
     age: f64,
     max_post_size: u64,
+    max_title_size: u64,
 }
 
 impl Display for ServerStats {
-
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         // TODO: that bookmarked clean-list library
         // TODO: coloration
-        writeln!(f, "Server running Terse version {}", self.version)?;
+        writeln!(f, "{} running Terse version {}", self.server_name, self.version)?;
         writeln!(f, "Users on server: {}", self.users)?;
         writeln!(f, "Answers on server: {}", self.posts)?;
         writeln!(f, "Server instance age: {}", self.age)?;
-        writeln!(f, "Maximum post size: {}", ByteSize::b(self.max_post_size))
+        writeln!(f, "Maximum post size: {}", ByteSize::b(self.max_post_size))?;
+        writeln!(f, "Maximum title size: {} characters", self.max_title_size)
     }
 }
 

@@ -103,7 +103,7 @@ impl ServerList {
         // NOTE: maybe always hop onto the brand new server?
         // or maybe a flag to do so or avoid doing so
         if self.servers.len() == 1 { self.selected = Some(0) }
-        return Ok(self.store()?);
+        Ok(self.store()?)
     }
 
     pub fn remove_server(&mut self, url: Url) -> Result<(), Error> {
@@ -118,18 +118,18 @@ impl ServerList {
         if self.selected.expect("The selected element should be Some, since the length of the server list is non-zero") 
         > self.servers.len() - 1 { self.selected = Some(self.servers.len() - 1) }
 
-        return Ok(self.store()?);
+        Ok(self.store()?)
     }
 
     // NOTE: maybe return the selected server?
-    pub fn set_server(&mut self, idx: usize) -> Result<(), SelectedServerError> {
+    pub fn set_server(&mut self, idx: usize) -> Result<(), Error> {
         if self.servers.is_empty() {
-            Err(SelectedServerError::NoServers)
+            Err(SelectedServerError::NoServers)?
         } else if idx >= self.servers.len() {
-            Err(SelectedServerError::OutOfBounds{ idx, max: self.servers.len() - 1})
+            Err(SelectedServerError::OutOfBounds{ idx, max: self.servers.len() - 1})?
         } else {
             self.selected = Some(idx);
-            Ok(())
+            Ok(self.store()?)
         }
     }
 }

@@ -23,6 +23,8 @@ thiserror = "2.0.18"
 
 # https://stackoverflow.com/questions/29008127/why-are-rust-executables-so-huge
 # maybe optimize a bit for speed also?
+# also remember the defaults:
+# https://doc.rust-lang.org/cargo/reference/profiles.html#default-profiles
 [profile.release]
 opt-level = 'z'     # Optimize for size
 lto = true          # Enable link-time optimization
