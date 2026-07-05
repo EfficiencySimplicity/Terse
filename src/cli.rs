@@ -2,6 +2,8 @@ use clap::{Parser, Subcommand};
 use anyhow::Error;
 use url::Url;
 
+use text_io::read;
+
 use std::path::PathBuf;
 
 use crate::tui::App;
@@ -25,7 +27,9 @@ pub enum Cli {
     #[command(name = "--pub")]
     Pub {title: String, path: PathBuf},
     #[command(subcommand, name = "--server")]
-    Server(ServerSubcommand)
+    Server(ServerSubcommand),
+    #[command(subcommand, name = "--account")]
+    Account(AccountSubcommand),
 }
 
 #[derive(Subcommand)]
@@ -34,6 +38,11 @@ pub enum ServerSubcommand {
     Remove {url: Url},
     Set {idx: usize},
     List,
+}
+
+#[derive(Subcommand)]
+pub enum AccountSubcommand {
+    New,
 }
 
 impl Cli {
@@ -67,6 +76,7 @@ impl Cli {
             Cli::Stats             => Self::process_stats(),
             Cli::Pub {title, path} => Self::process_pub(title, path),
             Cli::Server(command)   => command.process(),
+            Cli::Account(command)  => command.process(),
         }
         .inspect_err(|e| println!("{e}"))
         .ok();
@@ -132,6 +142,32 @@ impl ServerSubcommand {
             }
             Self::List => {
                 println!("{}", ServerList::from_config_file()?);
+            }
+        }
+        Ok(())
+    }
+}
+
+impl AccountSubcommand {
+    fn process(self) -> Result<(), Error> {
+        match self {
+            Self::New => {
+                let mut server_list = ServerList::from_config_file()?;
+                let server = server_list.selected()?;
+
+                println!("Creating new account on server {}:\n", server.url());
+
+                println!("Email: ");
+                let email: String = read!("{}\n");
+
+                // This could reprompt repeatedly if it exists already...
+                println!("Username: ");
+                let username: String = read!("{}\n");
+
+                println!("Password: ");
+                let password: String = read!("{}\n");
+
+                // server request new account...
             }
         }
         Ok(())
