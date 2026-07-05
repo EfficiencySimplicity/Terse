@@ -99,6 +99,18 @@ impl Server {
         )
     }
 
+    // in an accounts module? The server class is a bit big...
+
+    pub fn create_account(&mut self, account: Account) -> Result<String, Error>{
+        Ok(
+            self.client.post(self.with_params("accounts/create", ""))
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .body(serde_json::to_string::<Account>(&account).expect("The account should always be valid"))
+            .send()?
+            .text()?
+        )
+    }
+
     pub fn account_exists(&self, username: &str) -> Result<bool, Error> {
         Ok(
             self.client.get(self.with_params("accounts/exists", format!("username={username}")))

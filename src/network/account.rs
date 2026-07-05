@@ -4,7 +4,9 @@ use serde::{Serialize, Deserialize};
 use std::fmt::{Display, Write};
 use indent_write::fmt::IndentWriter;
 
-#[derive(Clone, Serialize, Deserialize)]
+use derive_new::new;
+
+#[derive(Clone, Serialize, Deserialize, new)]
 pub struct Account {
     email: String,
     username: String,

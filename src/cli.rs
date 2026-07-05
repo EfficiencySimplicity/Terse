@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 use crate::tui::App;
 use crate::posts::Post;
-use crate::network::{ServerList, SearchMenu, SearchResults};
+use crate::network::{Account, ServerList, SearchMenu, SearchResults};
 
 // https://docs.rs/clap/latest/clap/_derive/
 // TODO: -s hand commands
@@ -161,10 +161,11 @@ impl AccountSubcommand {
                 let email: String = read!("{}\n");
                 println!("");
 
-                // This could reprompt repeatedly if it exists already...
+                let mut username: String;
+
                 loop {
                     println!("Username: ");
-                    let username: String = read!("{}\n");
+                    username = read!("{}\n");
 
                     match server.account_exists(&username) {
                         Ok(exists) => {
@@ -176,7 +177,8 @@ impl AccountSubcommand {
                             }
                         }
                         Err(e) => {
-                            println!("I got an error when trying to check if an account with that username exists on {}", server.url())
+                            println!("I got an error when trying to check if an account with that username exists on {}:", server.url());
+                            println!("{e}")
                         }
                     }
                     println!("");
@@ -185,6 +187,14 @@ impl AccountSubcommand {
                 println!("Password: ");
                 let password: String = read!("{}\n");
                 println!("");
+
+                // TODO: have a few types of errors that the server can json back;
+                // or it it sorta unknown what the server'll do?
+                // Like, it could auto-sign ya up, or tell you to go to a link...
+                let return_message = server.create_account(Account::new(email, username, password))?;
+
+                println!("I asked the server to create your account, and it said:");
+                println!("{}", return_message);
 
                 // server request new account...
             }
