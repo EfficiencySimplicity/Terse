@@ -99,6 +99,14 @@ impl Server {
         )
     }
 
+    pub fn account_exists(&self, username: &str) -> Result<bool, Error> {
+        Ok(
+            self.client.get(self.with_params("accounts/exists", format!("username={username}")))
+            .send()?
+            .json::<bool>()?
+        )
+    }
+
     pub fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
         Ok(
             self.client.get(self.with_params("search", format!("query={}", query.join(" "))))

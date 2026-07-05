@@ -159,13 +159,32 @@ impl AccountSubcommand {
 
                 println!("Email: ");
                 let email: String = read!("{}\n");
+                println!("");
 
                 // This could reprompt repeatedly if it exists already...
-                println!("Username: ");
-                let username: String = read!("{}\n");
+                loop {
+                    println!("Username: ");
+                    let username: String = read!("{}\n");
+
+                    match server.account_exists(&username) {
+                        Ok(exists) => {
+                            if exists {
+                                println!("An account by the name of {username} already exists on {}", server.url())
+                            } else {
+                                println!("");
+                                break
+                            }
+                        }
+                        Err(e) => {
+                            println!("I got an error when trying to check if an account with that username exists on {}", server.url())
+                        }
+                    }
+                    println!("");
+                }
 
                 println!("Password: ");
                 let password: String = read!("{}\n");
+                println!("");
 
                 // server request new account...
             }
