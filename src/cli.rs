@@ -74,14 +74,7 @@ impl Cli {
 
     fn process_query(words: Vec<String>) -> Result<(), Error> {
 
-        // A note on the terminology; if these two are one line,
-        // we get a 'temporary value dropped while borrowed' error;
-        // https://stackoverflow.com/questions/71626083/error-e0716-temporary-value-dropped-while-borrowed
-        // Which I believe is due to shaky knowledge of &mut and stuff
-        // when making the selected() function in ServerList...
-
-        let mut server_list = ServerList::from_config_file()?;
-        let server = server_list.selected()?;
+        let server = ServerList::from_config_file()?.extract_selected()?;
         let results = server.search(words)?;
 
         App::default().run(&mut SearchMenu::new(SearchResults::new(&server, results)))?;
@@ -89,8 +82,7 @@ impl Cli {
     }
 
     fn process_stats() -> Result<(), Error> {
-        let mut server_list = ServerList::from_config_file()?;
-        let server = server_list.selected()?;
+        let server = ServerList::from_config_file()?.extract_selected()?;
         let stats = server.get_stats()?;
         
         println!("{stats}");
@@ -109,8 +101,7 @@ impl Cli {
         // to avoid unwrapping?
         let post = Post {title: title.clone(), content: content};
 
-        let mut server_list = ServerList::from_config_file()?;
-        let server = server_list.selected()?;
+        let server = ServerList::from_config_file()?.extract_selected()?;
         // TODO: if Post gets a user field, we'll need to create the post in-server;
         // might not know what account you're in!
         // would mean an Option<user> for the best bet, I guess
