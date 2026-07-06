@@ -22,3 +22,7 @@ target/
 
 # Not in use yet!
 CONTRIBUTING.md
+
+# Stores data files on debug builds
+
+/data

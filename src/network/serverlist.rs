@@ -43,10 +43,17 @@ impl ServerList {
     // If this returns Ok, the storage file is guaranteed to exist
     pub fn get_config_file() -> Result<PathBuf, SerializationError> {
 
-        // https://stackoverflow.com/questions/37890405/is-there-a-way-to-simplify-converting-an-option-into-a-result-without-a-macro
-        let dirs = ProjectDirs::from("", "InsanityOnAMachine", "Terse")
+        let servers_file;
+        // We store to a different data file on debug builds vs. release builds
+        // https://stackoverflow.com/questions/39204908/how-to-check-release-debug-builds-using-cfg-in-rust
+        if cfg!(not(debug_assertions)) {
+            // // https://stackoverflow.com/questions/37890405/is-there-a-way-to-simplify-converting-an-option-into-a-result-without-a-macro
+            let dirs = ProjectDirs::from("", "InsanityOnAMachine", "Terse")
             .ok_or(SerializationError::BadFilesystemConfig)?;
-        let servers_file = dirs.data_dir().join("servers");
+            servers_file = dirs.data_dir().join("servers.json");
+        } else {
+            servers_file = PathBuf::from("./data/servers.json")
+        }
 
         // https://doc.rust-lang.org/stable/std/path/struct.Path.html#method.exists
         // Here I opt to NOT use try_exists, because if I can't verify it exists,
