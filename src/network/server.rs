@@ -111,9 +111,17 @@ impl Server {
         )
     }
 
-    pub fn account_exists(&self, username: &str) -> Result<bool, Error> {
+    pub fn username_exists(&self, username: &str) -> Result<bool, Error> {
         Ok(
             self.client.get(self.with_params("accounts/exists", format!("username={username}")))
+            .send()?
+            .json::<bool>()?
+        )
+    }
+
+    pub fn email_exists(&self, email: &str) -> Result<bool, Error> {
+        Ok(
+            self.client.get(self.with_params("accounts/exists", format!("email={email}")))
             .send()?
             .json::<bool>()?
         )
