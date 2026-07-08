@@ -32,3 +32,13 @@ impl Display for Account {
         Ok(())
     }
 }
+
+// Why a message, not an enum?
+// Well, people could modify the server code to do whatever.
+// Maybe someone has accounts disabled somehow and wants to tell you not to bother;
+// This doesn't force the server into any restrictive contracts.
+#[derive(Deserialize)]
+pub enum AccountCreationMessage {
+    Sure,
+    Nope(String)
+}

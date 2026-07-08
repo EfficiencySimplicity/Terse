@@ -1,4 +1,5 @@
 use super::*;
+use crate::network::AccountCreationMessage;
 
 use text_io::read;
 
@@ -23,17 +24,20 @@ impl AccountSubcommand {
                     println!("Email: ");
                     email = read!("{}\n");
 
-                    match server.email_exists(&email) {
-                        Ok(exists) => {
-                            if exists {
-                                println!("An account with the email address {email} already exists on {}", server.url())
-                            } else {
-                                println!("");
-                                break
+                    match server.could_create_account(Some(&email), None) {
+                        Ok(message) => {
+                            match message {
+                                AccountCreationMessage::Sure => {
+                                    println!("");
+                                    break;
+                                }
+                                AccountCreationMessage::Nope(reason) => {
+                                    println!("{reason}")
+                                }
                             }
                         }
                         Err(e) => {
-                            println!("I got an error when trying to check if an account with that email exists on {}:", server.url());
+                            println!("I got an error when trying to check if there could be any problem creating an account with that email on {}:", server.url());
                             println!("{e}")
                         }
                     }
@@ -46,6 +50,8 @@ impl AccountSubcommand {
                     println!("Username (leave blank to use email): ");
                     username = read!("{}\n");
 
+                    // Don't bother checking; the email is fine and nobody can make a
+                    // username that's a valid email
                     if username.is_empty() {
                         username = email.clone();
                         break;
@@ -56,13 +62,16 @@ impl AccountSubcommand {
                     // server can send over whatever message it wants.
                     // And would that work? Could you tell it to ignore some fields;
                     // i.e. check email and ignore nonexistent username so far?
-                    match server.username_exists(&username) {
-                        Ok(exists) => {
-                            if exists {
-                                println!("An account by the name of {username} already exists on {}", server.url())
-                            } else {
-                                println!("");
-                                break
+                    match server.could_create_account(None, Some(&username)) {
+                        Ok(message) => {
+                            match message {
+                                AccountCreationMessage::Sure => {
+                                    println!("");
+                                    break;
+                                }
+                                AccountCreationMessage::Nope(reason) => {
+                                    println!("{reason}")
+                                }
                             }
                         }
                         Err(e) => {

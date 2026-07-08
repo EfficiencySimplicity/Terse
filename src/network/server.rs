@@ -4,7 +4,7 @@ use url::Url;
 use std::fmt::{Display, Formatter, Write};
 use bytesize::ByteSize;
 
-use crate::network::{Account, SearchResult};
+use crate::network::{Account, AccountCreationMessage, SearchResult};
 use crate::posts::{Post, PostSizeError};
 
 use indent_write::fmt::IndentWriter;
@@ -111,19 +111,21 @@ impl Server {
         )
     }
 
-    pub fn username_exists(&self, username: &str) -> Result<bool, Error> {
-        Ok(
-            self.client.get(self.with_params("accounts/exists", format!("username={username}")))
-            .send()?
-            .json::<bool>()?
-        )
-    }
+    // This fn does not pleas me
+    pub fn could_create_account(&self, email: Option<&str>, username: Option<&str>) -> Result<AccountCreationMessage, Error> {
+        let mut query = String::new();
 
-    pub fn email_exists(&self, email: &str) -> Result<bool, Error> {
+        if let Some(email) = email {
+            query.push_str(&format!("email={email}&"));
+        }
+        if let Some(username) = username {
+            query.push_str(&format!("username={username}"));
+        }
+
         Ok(
-            self.client.get(self.with_params("accounts/exists", format!("email={email}")))
+            self.client.get(self.with_params("accounts/could-create", query))
             .send()?
-            .json::<bool>()?
+            .json::<AccountCreationMessage>()?
         )
     }
 
