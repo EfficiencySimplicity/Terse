@@ -129,6 +129,24 @@ impl Server {
         )
     }
 
+    pub fn sign_into_account(&mut self, account: Account) -> Result<(), Error> {
+        let accepted = self.client.get(self.with_params("accounts/login", format!("username={}&password={}", account.username, account.password)))
+        .send()?
+        .json::<bool>()?;
+        
+        if accepted {
+            self.accounts.push(account);
+            Ok(())
+        } else {
+            Err(Error::msg("The account couldn't be signed in to"))
+        }
+
+        // If we just port over the password each time, why bother to do this first step
+        // of asking the server if we can have the account?
+        // Well, then we'd have a useless account in memory.
+        // Plus, whattabout when an account gets deleted externally? A whole 'nother problem
+    }
+
     pub fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
         Ok(
             self.client.get(self.with_params("search", format!("query={}", query.join(" "))))

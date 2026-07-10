@@ -40,6 +40,12 @@ impl ServerList {
         Ok(self.selected()?.clone())
     }
 
+    pub fn op_and_store<T>(&mut self, f: impl FnOnce(&mut Server) -> Result<T, Error>) -> Result<T, Error> {
+        let result = f(self.selected()?)?;
+        self.store()?;
+        Ok(result)
+    }
+
     // If this returns Ok, the storage file is guaranteed to exist
     pub fn get_config_file() -> Result<PathBuf, SerializationError> {
 

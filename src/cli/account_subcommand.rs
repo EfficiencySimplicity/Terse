@@ -5,7 +5,8 @@ use text_io::read;
 
 #[derive(Subcommand)]
 pub enum AccountSubcommand {
-    New,
+    New,//(NewOptions, which is enum for the e, Opt<u>, pass OR empty for lil tui)
+    Signin {username: String, password: String},
 }
 
 impl AccountSubcommand {
@@ -89,12 +90,26 @@ impl AccountSubcommand {
                 // TODO: have a few types of errors that the server can json back;
                 // or it it sorta unknown what the server'll do?
                 // Like, it could auto-sign ya up, or tell you to go to a link...
-                let return_message = server.create_account(Account::new(email, username, password))?;
+                let return_message = server.create_account(Account::new(Some(email), username, password))?;
 
                 println!("I asked the server to create your account, and it said:");
                 println!("{}", return_message);
 
                 // server request new account...
+            }
+
+            Self::Signin { username, password } => {
+                let account = Account::new(None, username.clone(), password);
+                match 
+                    ServerList::from_config_file()?
+                    .op_and_store(
+                        |selected| -> Result<(), Error> 
+                        {selected.sign_into_account(account)}
+                    ) {
+                    // TODO: server name
+                    Ok(server) => println!("I successfully signed you into {} on ", username),
+                    Err(e) => eprint!("{e}"),
+                }
             }
         }
         Ok(())

@@ -1,6 +1,6 @@
 use ratatui::{
-    DefaultTerminal,
-    widgets::{Widget, Block, BorderType},
+    prelude::Stylize,
+    DefaultTerminal, layout::{Layout, Direction, Constraint}, text::Span, widgets::{Block, BorderType, Widget},
 };
 
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -18,8 +18,18 @@ impl App {
     pub fn run_loop<T: Window>(&mut self, terminal: &mut DefaultTerminal, window: &mut T) -> Result<(), std::io::Error> where for<'a> &'a mut T: Widget {
         while !self.exit {
             terminal.draw(|frame| {
+                // https://docs.rs/ratatui/latest/ratatui/prelude/struct.Layout.html#method.areas
+                let [top, bottom] = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints(vec![
+                    Constraint::Fill(1),
+                    Constraint::Length(1),
+                ])
+                .areas(frame.area());
+
                 // https://stackoverflow.com/questions/30026893/how-to-use-a-map-over-vectors#30026986
-                window.render(frame.area(), frame.buffer_mut());
+                window.render(top, frame.buffer_mut());
+                Span::from("ESC to quit").on_red().into_right_aligned_line().render(bottom, frame.buffer_mut());
             })?;
 
             if let Event::Key(key_event) = event::read()? {
