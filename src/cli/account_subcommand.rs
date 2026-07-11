@@ -6,7 +6,7 @@ use text_io::read;
 #[derive(Subcommand)]
 pub enum AccountSubcommand {
     New,//(NewOptions, which is enum for the e, Opt<u>, pass OR empty for lil tui)
-    Signin {username: String, password: String},
+    Login {username: String, password: String},
 }
 
 impl AccountSubcommand {
@@ -98,16 +98,16 @@ impl AccountSubcommand {
                 // server request new account...
             }
 
-            Self::Signin { username, password } => {
+            Self::Login { username, password } => {
                 let account = Account::new(None, username.clone(), password);
                 match 
                     ServerList::from_config_file()?
                     .op_and_store(
                         |selected| -> Result<(), Error> 
-                        {selected.sign_into_account(account)}
+                        {selected.login_account(account)}
                     ) {
                     // TODO: server name
-                    Ok(server) => println!("I successfully signed you into {} on ", username),
+                    Ok(server) => println!("I successfully logged you into {} on ", username),
                     Err(e) => eprint!("{e}"),
                 }
             }

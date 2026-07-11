@@ -129,7 +129,7 @@ impl Server {
         )
     }
 
-    pub fn sign_into_account(&mut self, account: Account) -> Result<(), Error> {
+    pub fn login_account(&mut self, account: Account) -> Result<(), Error> {
         let accepted = self.client.get(self.with_params("accounts/login", format!("username={}&password={}", account.username, account.password)))
         .send()?
         .json::<bool>()?;
@@ -138,7 +138,7 @@ impl Server {
             self.accounts.push(account);
             Ok(())
         } else {
-            Err(Error::msg("The account couldn't be signed in to"))
+            Err(Error::msg("The account couldn't be logged into"))
         }
 
         // If we just port over the password each time, why bother to do this first step
