@@ -13,6 +13,10 @@ use account_subcommand::*;
 pub mod server_subcommand;
 use server_subcommand::*;
 
+#[cfg(debug_assertions)]
+pub mod dev_subcommand;
+use dev_subcommand::*;
+
 // https://docs.rs/clap/latest/clap/_derive/
 // TODO: -s hand commands
 // TODO: help
@@ -33,6 +37,11 @@ pub enum Cli {
     Server(ServerSubcommand),
     #[command(subcommand, name = "--account")]
     Account(AccountSubcommand),
+    
+    #[cfg(debug_assertions)]
+    // eeyou do not GET access to this pro-prietary subcommando!!!
+    #[command(subcommand, name = "--dev")]
+    Dev(DevSubcommand),
 }
 
 impl Cli {
@@ -67,6 +76,8 @@ impl Cli {
             Cli::Pub {title, path} => Self::process_pub(title, path),
             Cli::Server(command)   => command.process(),
             Cli::Account(command)  => command.process(),
+            #[cfg(debug_assertions)]
+            Cli::Dev(command)      => command.process(),
         }
         .inspect_err(|e| println!("{e}"))
         .ok();
