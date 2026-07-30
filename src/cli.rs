@@ -15,6 +15,7 @@ use server_subcommand::*;
 
 #[cfg(debug_assertions)]
 pub mod dev_subcommand;
+#[cfg(debug_assertions)]
 use dev_subcommand::*;
 
 // https://docs.rs/clap/latest/clap/_derive/
@@ -40,7 +41,7 @@ pub enum Cli {
     
     #[cfg(debug_assertions)]
     // eeyou do not GET access to this pro-prietary subcommando!!!
-    #[command(subcommand, name = "--dev")]
+    #[command(subcommand, name = "--dev", about = "Special developer commands to do things faster")]
     Dev(DevSubcommand),
 }
 

@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Subcommand)]
 pub enum DevSubcommand {
+    #[command(about = "Deletes an account via the username and code")]
     DeleteAccount {username: String, code: String},
 }
 

@@ -6,3 +6,6 @@
 
 - Docs README claims that these are effectively the man pages. How do you integrate them to be actual man pages?...
     - I want Terse's help to be actually human-readable...
+
+- This is an idea: 
+    https://docs.rs/clap-help/latest/clap_help/
