@@ -1,6 +1,7 @@
 use reqwest::{StatusCode, blocking::Client};
 use anyhow::Error;
 use url::Url;
+use std::eprintln;
 use std::fmt::{Display, Formatter, Write};
 use bytesize::ByteSize;
 
@@ -147,6 +148,39 @@ impl Server {
         // Plus, whattabout when an account gets deleted externally? A whole 'nother problem
     }
 
+    // This should ask the server to create a deletion code and send an email to the
+    // user's inbox, returning an error if the server has a problem
+    pub fn request_delete_account(&self, username: &str) -> Result<(), Error> {
+        let text = self.client.post(self.with_params("accounts/delete/please", format!("username={username}")))
+            .send()?
+            .text()?;
+        
+        // The server is silent if it;s ok and only returns text if it has a problem
+        if !text.is_empty() {
+            return Err(Error::msg(text))
+        }
+        Ok(())
+    }
+
+    // This is pretty much the above. Ya know! This can be D.R.Y.
+    pub fn finalize_delete_account(&mut self, username: &str, code: String) -> Result<(), Error> {
+        let text = self.client.post(self.with_params("accounts/delete", format!("username={username}&code={code}")))
+            .send()?
+            .text()?;
+
+        // The server is silent if it;s ok and only returns text if it has a problem
+        if !text.is_empty() {
+            return Err(Error::msg(text))
+        }
+
+        let idx = self.accounts.iter().position(|x| x.username == username);
+        match idx {
+            Some(n) => _ = self.accounts.remove(n),
+            None => eprintln!("The account you are deleting isn't in the accounts list for the current server")
+        }
+        Ok(())
+    }
+
     pub fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
         Ok(
             self.client.get(self.with_params("search", format!("query={}", query.join(" "))))
@@ -206,7 +240,8 @@ impl Display for ServerStats {
         writeln!(f, "Answers on server: {}", self.posts)?;
         writeln!(f, "Server instance age: {}", self.age)?;
         writeln!(f, "Maximum post size: {}", ByteSize::b(self.max_post_size))?;
-        writeln!(f, "Maximum title size: {} characters", self.max_title_size)
+        writeln!(f, "Maximum title size: {} characters", self.max_title_size)?;
+        Ok(())
     }
 }
 

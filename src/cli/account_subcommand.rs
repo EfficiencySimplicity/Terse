@@ -6,8 +6,10 @@ use text_io::read;
 #[derive(Subcommand)]
 pub enum AccountSubcommand {
     New,//(NewOptions, which is enum for the e, Opt<u>, pass OR empty for lil tui)
-    Login {username: String, password: String},
-}
+    Login {username: String, password: String},// Don't worry; the above comment makes no sense to me either
+    Delete {username: String},// TODO: account identifiers? aliases? Overcomplicating, am I?
+}// Oh yeah that comment makes sense now! Either pass in the username, password, etc, or leave it blank
+// and it prompts you to enter things!
 
 impl AccountSubcommand {
     pub fn process(self) -> Result<(), Error> {
@@ -109,6 +111,24 @@ impl AccountSubcommand {
                     // TODO: server name
                     Ok(server) => println!("I successfully logged you into {} on ", username),
                     Err(e) => eprint!("{e}"),
+                }
+            }
+            Self::Delete { username, } => {
+                let mut server_list = ServerList::from_config_file()?;
+                let mut server = server_list.selected()?;
+                match server.request_delete_account(&username) {
+                    Ok(_) => {
+                        println!("I asked the server to send a code to your inbox; please enter it here:");
+                        let code: String = read!("{}\n");
+                        match server.finalize_delete_account(&username, code) {
+                            Ok(_) => {
+                                println!("The server successfully deleted your account!");
+                                server_list.store()?
+                            },
+                            Err(e) => eprintln!("The server had a problem deleting your account: {e}")
+                        }
+                    },
+                    Err(e) => eprint!("The server had a problem: {e}"),
                 }
             }
         }
