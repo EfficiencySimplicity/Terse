@@ -38,6 +38,8 @@ pub enum Cli {
     Server(ServerSubcommand),
     #[command(subcommand, name = "--account")]
     Account(AccountSubcommand),
+    #[command(name = "--whoami")]
+    Whoami,
     
     #[cfg(debug_assertions)]
     // eeyou do not GET access to this pro-prietary subcommando!!!
@@ -77,6 +79,8 @@ impl Cli {
             Cli::Pub {title, path} => Self::process_pub(title, path),
             Cli::Server(command)   => command.process(),
             Cli::Account(command)  => command.process(),
+            Cli::Whoami            => Self::process_whoami(),
+
             #[cfg(debug_assertions)]
             Cli::Dev(command)      => command.process(),
         }
@@ -120,6 +124,21 @@ impl Cli {
         server.publish(post)?;
 
         println!("I was able to publish your post, \"{title}\"");
+        Ok(())
+    }
+
+    fn process_whoami() -> Result<(), Error> {
+        let maybe_server = ServerList::from_config_file()?.extract_selected();
+        match maybe_server {
+            Ok(server) => {
+                println!("You are on {} ({})", server.url(), server.get_stats().map_or(String::from("Couldn't get name"), |x| x.server_name));
+                println!("TODO: have the server store the current account");
+            },
+            Err(_) => {
+                // You DEFINITELY have none; it can't be outta bounds, right?!
+                eprintln!("I couldn't get the current server... You might have none!");
+            }
+        }
         Ok(())
     }
 }

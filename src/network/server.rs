@@ -251,7 +251,7 @@ impl Into<ServerSerializer> for Server {
 
 #[derive(Deserialize)]
 pub struct ServerStats {
-    server_name: String,
+    pub server_name: String,
     version: String,
     users: u32,
     posts: u32,
