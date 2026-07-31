@@ -8,6 +8,7 @@ pub enum AccountSubcommand {
     New,//(NewOptions, which is enum for the e, Opt<u>, pass OR empty for lil tui)
     Login {username: String, password: String},// Don't worry; the above comment makes no sense to me either
     Delete {username: String},// TODO: account identifiers? aliases? Overcomplicating, am I?
+    List,
 }// Oh yeah that comment makes sense now! Either pass in the username, password, etc, or leave it blank
 // and it prompts you to enter things!
 
@@ -131,8 +132,15 @@ impl AccountSubcommand {
                     },
                     Err(e) => eprint!("The server had a problem: {e}"),
                 }
-            }
+            },
+            Self::List => Self::process_list(server_list)?
         }
+        Ok(())
+    }
+
+    // TODO: type alias for Result<(), Error>?
+    fn process_list(server_list: &ServerList) -> Result<(), Error> {
+        println!("{}", server_list.clone_selected()?);
         Ok(())
     }
 }
