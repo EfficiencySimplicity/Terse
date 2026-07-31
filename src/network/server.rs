@@ -1,7 +1,6 @@
 use reqwest::{StatusCode, blocking::Client};
 use anyhow::Error;
 use url::Url;
-use std::eprintln;
 use std::fmt::{Display, Formatter, Write};
 use bytesize::ByteSize;
 
@@ -202,10 +201,15 @@ impl Server {
             return Err(Error::msg(text))
         }
 
+        self.remove_account(username)?;
+        Ok(())
+    }
+
+    pub fn remove_account(&mut self, username: &str) -> Result<(), Error> {
         let idx = self.accounts.iter().position(|x| x.username == username);
         match idx {
             Some(n) => _ = self.accounts.remove(n),
-            None => eprintln!("The account you are deleting isn't in the accounts list for the current server")
+            None => _ = Err(Error::msg("The account you are deleting isn't in the accounts list for the current server"))?
         }
         Ok(())
     }
@@ -288,7 +292,7 @@ pub enum ServerValidityError {
 }
 
 impl From<reqwest::Error> for ServerValidityError {
-    fn from(value: reqwest::Error) -> Self {
+    fn from(_value: reqwest::Error) -> Self {
         ServerValidityError::CannotConnect
     }
 }
