@@ -145,6 +145,12 @@ impl AccountSubcommand {
 
     fn process_delete(server_list: &mut ServerList, username: String) -> Result<(), Error> {
         let server = server_list.selected()?;
+
+        // https://stackoverflow.com/questions/39029274/how-to-wrap-a-raw-string-literal-without-inserting-newlines-into-the-raw-string
+        println!(concat!("Note: if you want to log out of your account ",
+        "instead of deleting it, you should run:    trs --account logout {}    instead.",
+        "(Ctrl- or Win- C to quit deletion process)"), username);
+        
         match server.request_delete_account(&username) {
             Ok(_) => {
                 println!("I asked the server to send a code to your inbox; please enter it here:");
