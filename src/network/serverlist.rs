@@ -36,14 +36,9 @@ impl ServerList {
         self.selected.map(|x| &mut self.servers[x as usize]).ok_or(SelectedServerError::NoServers)
     }
     
-    pub fn extract_selected(&mut self) -> Result<Server, SelectedServerError> {
-        Ok(self.selected()?.clone())
-    }
-
-    pub fn op_and_store<T>(&mut self, f: impl FnOnce(&mut Server) -> Result<T, Error>) -> Result<T, Error> {
-        let result = f(self.selected()?)?;
-        self.store()?;
-        Ok(result)
+    // For when you need the selected server but ain't gonna modify it.
+    pub fn clone_selected(&self) -> Result<Server, SelectedServerError> {
+        Ok(self.selected.map(|x| self.servers[x as usize].clone()).ok_or(SelectedServerError::NoServers)?)
     }
 
     // If this returns Ok, the storage file is guaranteed to exist

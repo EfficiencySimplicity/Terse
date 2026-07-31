@@ -73,32 +73,47 @@ impl Cli {
     }
 
     pub fn process(self) {
-        match self {
-            Cli::Search {query}    => Self::process_query(query),
-            Cli::Stats             => Self::process_stats(),
-            Cli::Pub {title, path} => Self::process_pub(title, path),
-            Cli::Server(command)   => command.process(),
-            Cli::Account(command)  => command.process(),
-            Cli::Whoami            => Self::process_whoami(),
+        // Having this here does mean that some commands that don't need
+        // disk access at all could fail, but it is WORTH IT.
+        let mut server_list = match ServerList::from_config_file() {
+            Ok(s) => s,
+            Err(_) => {
+                eprintln!("There was an error reading from disk :(");
+                return
+            }
+        };
+
+        let run_result = match self {
+            Cli::Search {query}    => Self::process_query(&server_list, query),
+            Cli::Stats             => Self::process_stats(&server_list),
+            Cli::Pub {title, path} => Self::process_pub(&server_list, title, path),
+            Cli::Server(command)   => command.process(&mut server_list),
+            Cli::Account(command)  => command.process(&mut server_list),
+            Cli::Whoami            => Self::process_whoami(&server_list),
 
             #[cfg(debug_assertions)]
-            Cli::Dev(command)      => command.process(),
+            Cli::Dev(command)      => command.process(&mut server_list),
+        };
+
+        match run_result {
+            Ok(_) => if let Err(e) = server_list.store() {
+                println!("Error writing to disk: {e}")
+            }
+            Err(e) => eprintln!("{e}")
         }
-        .inspect_err(|e| println!("{e}"))
-        .ok();
     }
 
-    fn process_query(words: Vec<String>) -> Result<(), Error> {
+    fn process_query(server_list: &ServerList, words: Vec<String>) -> Result<(), Error> {
 
-        let server = ServerList::from_config_file()?.extract_selected()?;
+        let server = server_list.clone_selected()?;
         let results = server.search(words)?;
 
         App::default().run(&mut SearchMenu::new(SearchResults::new(&server, results)))?;
         Ok(())
     }
 
-    fn process_stats() -> Result<(), Error> {
-        let server = ServerList::from_config_file()?.extract_selected()?;
+    fn process_stats(server_list: &ServerList) -> Result<(), Error> {
+        let server = server_list.clone_selected()?;
         let stats = server.get_stats()?;
         
         println!("{stats}");
@@ -106,7 +121,7 @@ impl Cli {
     }
 
     // Maybe make custom errors for publishing, etc etc etc...
-    fn process_pub(title: String, path: PathBuf) -> Result<(), Error> {
+    fn process_pub(server_list: &ServerList, title: String, path: PathBuf) -> Result<(), Error> {
 
         // There could be a wrapper for fs errors that provides better printing
         // 'I couldn't read the path' is good enough, and after a semicolon; great!
@@ -117,7 +132,7 @@ impl Cli {
         // to avoid unwrapping?
         let post = Post {title: title.clone(), content: content};
 
-        let server = ServerList::from_config_file()?.extract_selected()?;
+        let server = server_list.clone_selected()?;
         // TODO: if Post gets a user field, we'll need to create the post in-server;
         // might not know what account you're in!
         // would mean an Option<user> for the best bet, I guess
@@ -127,8 +142,8 @@ impl Cli {
         Ok(())
     }
 
-    fn process_whoami() -> Result<(), Error> {
-        let maybe_server = ServerList::from_config_file()?.extract_selected();
+    fn process_whoami(server_list: &ServerList) -> Result<(), Error> {
+        let maybe_server = server_list.clone_selected();
         match maybe_server {
             Ok(server) => {
                 println!("You are on {} ({})", server.url(), server.get_stats().map_or(String::from("Couldn't get name"), |x| x.server_name));

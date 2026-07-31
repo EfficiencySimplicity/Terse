@@ -12,10 +12,9 @@ pub enum AccountSubcommand {
 // and it prompts you to enter things!
 
 impl AccountSubcommand {
-    pub fn process(self) -> Result<(), Error> {
+    pub fn process(self, server_list: &mut ServerList) -> Result<(), Error> {
         match self {
             Self::New => {
-                let mut server_list = ServerList::from_config_file()?;
                 let server = server_list.selected()?;
 
                 println!("Creating new account on server {}:\n", server.url());
@@ -110,20 +109,15 @@ impl AccountSubcommand {
 
             Self::Login { username, password } => {
                 let account = Account::new(None, username.clone(), password);
-                match 
-                    ServerList::from_config_file()?
-                    .op_and_store(
-                        |selected| -> Result<(), Error> 
-                        {selected.login_account(account)}
-                    ) {
-                    // TODO: server name
-                    Ok(server) => println!("I successfully logged you into {} on ", username),
+                let server = server_list.selected()?;
+                match server.login_account(account) {
+                    // TODO: have a server command that gets a name field; "url" (name)
+                    Ok(_) => println!("I successfully logged you into {} on {}", username, server.url()),
                     Err(e) => eprint!("{e}"),
                 }
             }
             Self::Delete { username, } => {
-                let mut server_list = ServerList::from_config_file()?;
-                let mut server = server_list.selected()?;
+                let server = server_list.selected()?;
                 match server.request_delete_account(&username) {
                     Ok(_) => {
                         println!("I asked the server to send a code to your inbox; please enter it here:");
@@ -131,7 +125,6 @@ impl AccountSubcommand {
                         match server.finalize_delete_account(&username, code) {
                             Ok(_) => {
                                 println!("The server successfully deleted your account!");
-                                server_list.store()?
                             },
                             Err(e) => eprintln!("The server had a problem deleting your account: {e}")
                         }
