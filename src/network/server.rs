@@ -112,6 +112,35 @@ impl Server {
         )
     }
 
+    pub fn request_create_account(&mut self, account: Account) -> Result<(), Error> {
+        let text = self.client.post(self.with_params("accounts/create/please", ""))
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .body(serde_json::to_string::<Account>(&account).expect("The account should always be valid"))
+            .send()?
+            .text()?;
+        
+        // The server is silent if it's ok and only returns text if it has a problem
+        if !text.is_empty() {
+            return Err(Error::msg(text))
+        }
+        Ok(())
+    }
+
+    // Better known as verifying the account.
+    pub fn finalize_create_account(&mut self, account: Account, code: &str) -> Result<(), Error> {
+        let text = self.client.post(self.with_params("accounts/verify", format!("username={}&code={code}", account.username)))
+            .send()?
+            .text()?;
+
+        // The server is silent if it's ok and only returns text if it has a problem
+        if !text.is_empty() {
+            return Err(Error::msg(text))
+        }
+
+        self.accounts.push(account);
+        Ok(())
+    }
+
     // This fn does not pleas me
     pub fn could_create_account(&self, email: Option<&str>, username: Option<&str>) -> Result<AccountCreationMessage, Error> {
         let mut query = String::new();
@@ -155,7 +184,7 @@ impl Server {
             .send()?
             .text()?;
         
-        // The server is silent if it;s ok and only returns text if it has a problem
+        // The server is silent if it's ok and only returns text if it has a problem
         if !text.is_empty() {
             return Err(Error::msg(text))
         }
@@ -168,7 +197,7 @@ impl Server {
             .send()?
             .text()?;
 
-        // The server is silent if it;s ok and only returns text if it has a problem
+        // The server is silent if it's ok and only returns text if it has a problem
         if !text.is_empty() {
             return Err(Error::msg(text))
         }

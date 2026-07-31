@@ -89,15 +89,23 @@ impl AccountSubcommand {
                 let password: String = read!("{}\n");
                 println!("");
 
-                // TODO: have a few types of errors that the server can json back;
-                // or it it sorta unknown what the server'll do?
-                // Like, it could auto-sign ya up, or tell you to go to a link...
-                let return_message = server.create_account(Account::new(Some(email), username, password))?;
+                let account = Account::new(Some(email), username.clone(), password);
 
-                println!("I asked the server to create your account, and it said:");
-                println!("{}", return_message);
-
-                // server request new account...
+                // This is a sweet amount of code duplication. Really! REALLY!
+                match server.request_create_account(account.clone()) {
+                    Ok(_) => {
+                        println!("I asked the server to send a code to your inbox; please enter it here:");
+                        let code: String = read!("{}\n");
+                        match server.finalize_create_account(account, &code) {
+                            Ok(_) => {
+                                println!("The server successfully created your account!");
+                                server_list.store()?
+                            },
+                            Err(e) => eprintln!("The server had a problem creating your account: {e}")
+                        }
+                    },
+                    Err(e) => eprint!("The server had a problem: {e}"),
+                }
             }
 
             Self::Login { username, password } => {
