@@ -146,7 +146,7 @@ impl Cli {
         let maybe_server = server_list.clone_selected();
         match maybe_server {
             Ok(server) => {
-                println!("You are on {} ({})", server.url(), server.get_stats().map_or(String::from("Couldn't get name"), |x| x.server_name));
+                println!("You are on {}", server.identifier_string());
                 println!("TODO: have the server store the current account");
             },
             Err(_) => {

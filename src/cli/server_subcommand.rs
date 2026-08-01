@@ -23,7 +23,7 @@ impl ServerSubcommand {
                 let server = server_list.set_server(idx)?;
                 // If this wanted more stats... I'd just not globally error;
                 // I'd say "I successfully set the server to 4: [couldn't get name]""
-                println!("I successfully set the server to {idx}: {}", server.url());
+                println!("I successfully set the server to {idx}: {}", server.identifier_string());
             }
             Self::List => {
                 println!("{server_list}");

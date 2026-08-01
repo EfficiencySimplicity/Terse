@@ -37,7 +37,7 @@ impl AccountSubcommand {
 
         match server.login_account(account) {
             // TODO: have a server command that gets a name field; "url" (name)
-            Ok(_) => println!("I successfully logged you into {} on {}", username, server.url()),
+            Ok(_) => println!("I successfully logged you into {} on {}", username, server.identifier_string()),
             Err(e) => eprint!("{e}"),
         }
         Ok(())
@@ -52,7 +52,7 @@ impl AccountSubcommand {
     fn process_new(server_list: &mut ServerList) -> Result<(), Error> {
         let server = server_list.selected()?;
 
-        println!("Creating new account on server {}:\n", server.url());
+        println!("Creating new account on {}:\n", server.identifier_string());
 
         let mut email: String;
 

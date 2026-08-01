@@ -39,6 +39,10 @@ impl Server {
         self.url.clone()
     }
 
+    pub fn identifier_string(&self) -> String {
+        return format!("{} ({})", self.url(), self.get_stats().map_or(String::from("Couldn't get name"), |x| x.server_name))
+    }
+
     pub fn exists_and_is_a_terse_server(&self) -> Result<(), ServerValidityError> {
         let status = self.client.get(self.with_params("exists-and-is-a-terse-server", ""))
         .send()?.status();
@@ -226,7 +230,7 @@ impl Server {
 impl Display for Server {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut i = IndentWriter::new("\t", f);
-        writeln!(i, "{}", self.url.as_str())?;
+        writeln!(i, "{}", self.identifier_string().as_str())?;
         writeln!(i, "Accounts: {}", self.accounts.len())?;
         for account in &self.accounts {
             writeln!(i, "{}", account)?;
