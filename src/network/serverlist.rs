@@ -1,6 +1,7 @@
 use directories::ProjectDirs;
 use std::fs::*;
 use std::path::PathBuf;
+use std::fmt::Write;
 
 use serde::{Serialize, Deserialize};
 
@@ -18,17 +19,6 @@ pub struct ServerList {
     selected: Option<usize>,
 }
 
-impl std::fmt::Display for ServerList {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Servers: {}", self.servers.len())?;
-
-        for server in &self.servers {
-            writeln!(f, "{}", server)?;
-        }
-
-        Ok(())
-    }
-}
 
 impl ServerList {
     pub fn selected(&mut self) -> Result<&mut Server, SelectedServerError> {
@@ -145,7 +135,32 @@ impl ServerList {
             Ok(self.selected().expect("This should point to a server, of course!"))
         }
     }
+
+    pub fn with_passwords(&self) -> Result<String, std::fmt::Error> {
+        let mut s = String::new();
+        writeln!(s, "Servers: {}", self.servers.len())?;
+
+        for server in &self.servers {
+            writeln!(s, "{}", server.with_password()?)?;
+        }
+
+        Ok(s)
+    }
+
 }
+
+impl std::fmt::Display for ServerList {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Servers: {}", self.servers.len())?;
+
+        for server in &self.servers {
+            writeln!(f, "{server}")?;
+        }
+
+        Ok(())
+    }
+}
+
 
 #[derive(Serialize, Deserialize)]
 pub struct ServerListSerializer {

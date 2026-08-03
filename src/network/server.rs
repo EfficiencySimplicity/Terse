@@ -154,13 +154,20 @@ impl Server {
             .json::<Vec<SearchResult>>()?
         )
     }
+
+    pub fn with_password(&self) -> Result<String, std::fmt::Error> {
+        let mut s = String::new();
+        writeln!(s, "{}", self.identifier_string().as_str())?;
+        writeln!(s, "{}", self.account.clone().map_or(String::from("(Not signed in)"), |x| format!("Signed in as {}", x.with_password())))?;
+        Ok(s)
+    }
 }
 
 impl Display for Server {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut i = IndentWriter::new("\t", f);
         writeln!(i, "{}", self.identifier_string().as_str())?;
-        writeln!(i, "{}", self.account.clone().map_or(String::from("(Not signed in)"), |x| format!("Signed in as {}", x)))?;
+        writeln!(i, "{}", self.account.clone().map_or(String::from("(Not signed in)"), |x| format!("Signed in as {x}")))?;
         Ok(())
     }
 }

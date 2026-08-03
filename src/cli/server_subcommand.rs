@@ -9,7 +9,8 @@ pub enum ServerSubcommand {
     Remove {url: Url},
     Set {idx: usize},
     Login {email: String, password: String},
-    List,
+    // https://stackoverflow.com/questions/60458705/how-do-i-specify-a-boolean-command-line-flag-using-clap
+    List {#[clap(short('p'), action)] show_passwords: bool},
 }
 
 impl ServerSubcommand {
@@ -29,8 +30,8 @@ impl ServerSubcommand {
                 // I'd say "I successfully set the server to 4: [couldn't get name]""
                 println!("I successfully set the server to {idx}: {}", server.identifier_string());
             }
-            Self::List => {
-                println!("{server_list}");
+            Self::List { show_passwords } => {
+                println!("{}", if show_passwords {server_list.with_passwords()?} else {server_list.to_string()});
             }
             Self::Login { email, password } => {
                 let server = server_list.selected()?;
