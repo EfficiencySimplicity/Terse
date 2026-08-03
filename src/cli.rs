@@ -37,8 +37,8 @@ pub enum Cli {
     #[command(name = "--whoami")]
     Whoami,
     
-    #[cfg(debug_assertions)]
     // eeyou do not GET access to this pro-prietary subcommando!!!
+    #[cfg(debug_assertions)]
     #[command(subcommand, name = "--dev", about = "Special developer commands to do things faster")]
     Dev(DevSubcommand),
 }
@@ -82,9 +82,8 @@ impl Cli {
         let run_result = match self {
             Cli::Search {query}    => Self::process_query(&server_list, query),
             Cli::Stats             => Self::process_stats(&server_list),
-            Cli::Pub {title, path} => Self::process_pub(&server_list, title, path),
+            Cli::Pub {title, path} => Self::process_pub(&mut server_list, title, path),
             Cli::Server(command)   => command.process(&mut server_list),
-            //Cli::Account(command)  => command.process(&mut server_list),
             Cli::Whoami            => Self::process_whoami(&server_list),
 
             #[cfg(debug_assertions)]
@@ -100,7 +99,6 @@ impl Cli {
     }
 
     fn process_query(server_list: &ServerList, words: Vec<String>) -> Result<(), Error> {
-
         let server = server_list.clone_selected()?;
         let results = server.search(words)?;
 
@@ -117,7 +115,12 @@ impl Cli {
     }
 
     // Maybe make custom errors for publishing, etc etc etc...
-    fn process_pub(server_list: &ServerList, title: String, path: PathBuf) -> Result<(), Error> {
+    fn process_pub(server_list: &mut ServerList, title: String, path: PathBuf) -> Result<(), Error> {
+        let server = server_list.selected()?;
+
+        if !server.is_signed_in() {
+            return Err(Error::msg("You aren't signed in to this server, so you cannot publish; try using the    trs --server login    command"))
+        }
 
         // There could be a wrapper for fs errors that provides better printing
         // 'I couldn't read the path' is good enough, and after a semicolon; great!
@@ -128,10 +131,6 @@ impl Cli {
         // to avoid unwrapping?
         let post = Post {title: title.clone(), content: content};
 
-        let server = server_list.clone_selected()?;
-        // TODO: if Post gets a user field, we'll need to create the post in-server;
-        // might not know what account you're in!
-        // would mean an Option<user> for the best bet, I guess
         server.publish(post)?;
 
         println!("I was able to publish your post, \"{title}\"");

@@ -4,7 +4,7 @@ use url::Url;
 use std::fmt::{Display, Formatter, Write};
 use bytesize::ByteSize;
 
-use crate::network::{Account, AccountCreationMessage, SearchResult};
+use crate::network::{Account, SearchResult};
 use crate::posts::{Post, PostSizeError};
 
 use indent_write::fmt::IndentWriter;
@@ -39,8 +39,20 @@ impl Server {
         self.account = Some(account)
     }
 
+    pub fn is_signed_in(&self) -> bool {
+        self.account.is_some()
+    }
+
     pub fn identifier_string(&self) -> String {
         return format!("{} ({})", self.url(), self.get_stats().map_or(String::from("Couldn't get name"), |x| x.server_name))
+    }
+
+    pub fn user_string(&self) -> String {
+        return format!(
+            "{} on {} ({})",
+            self.account.clone().map_or(String::from("(Not signed in)"), |x| x.email),
+            self.url(),
+            self.get_stats().map_or(String::from("Couldn't get name"), |x| x.server_name))
     }
 
     pub fn exists_and_is_a_terse_server(&self) -> Result<(), ServerValidityError> {
@@ -64,16 +76,6 @@ impl Server {
         url.set_query(Some(query.as_ref()));
         return url;
     }
-
-    // Does this account exist and is the passcode correct?!
-    // pub fn credentials_are_valid(self, account: Account) -> Result<bool, Error> {
-    //     Ok(
-    //         self.client.get(self.with_params("account/exists", ""))
-    //         .body(serde_json::to_string(&account)?)
-    //         .send()?
-    //         .json::<bool>()?
-    //     )
-    // }
 
     // test the server, etc
     pub fn request_login(&self, account: &Account) -> Result<LoginOption, Error> {
@@ -139,22 +141,6 @@ impl Server {
         )
     }
 
-    // in an accounts module? The server class is a bit big...
-
-    pub fn request_verify_email(&mut self, email: String) -> Result<(), Error> {
-        let text = self.client.post(self.with_params("accounts/create/please", format!("email={email}")))
-            .header(reqwest::header::CONTENT_TYPE, "application/json")
-            .send()?
-            .text()?;
-        
-        // The server is silent if it's ok and only returns text if it has a problem
-        if !text.is_empty() {
-            return Err(Error::msg(text))
-        }
-        Ok(())
-    }
-
-
     pub fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
         Ok(
             self.client.get(self.with_params("search", format!("query={}", query.join(" "))))
@@ -168,7 +154,6 @@ impl Display for Server {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut i = IndentWriter::new("\t", f);
         writeln!(i, "{}", self.identifier_string().as_str())?;
-        // This works just as well with only x.email, but I like the pretty colors over privacy
         writeln!(i, "{}", self.account.clone().map_or(String::from("(Not signed in)"), |x| format!("Signed in as {}", x)))?;
         Ok(())
     }
