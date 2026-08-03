@@ -1,10 +1,14 @@
 use super::*;
+use text_io::read;
+
+use crate::network::server::LoginOption;
 
 #[derive(Subcommand)]
 pub enum ServerSubcommand {
     Add {url: Url},
     Remove {url: Url},
     Set {idx: usize},
+    Login {email: String, password: String},
     List,
 }
 
@@ -27,6 +31,44 @@ impl ServerSubcommand {
             }
             Self::List => {
                 println!("{server_list}");
+            }
+            Self::Login { email, password } => {
+                let server = server_list.selected()?;
+                let account = Account::new(email, password);
+
+                // THIS IS NOT TRUE
+                // So we ask to sign in with this info;
+                // And if the user is already verified and the password matches,
+                // We're let in.
+                // Otherwise the server creates the account and asks us for the code.
+
+                // THIS IS CURRENTLY TRUE
+                // We ask to 'create an account on the server'
+                // I.e. "Server, trust that I own this email address!"
+                // Well, the server don't trust us, it says, 'prove it!'
+                // It sends us a code, and we use it as our account passcode,
+                // doing a quick check first to the server to ask, 'hey, did we do it right?'
+                // and so on.
+
+                match server.request_login(&account)? {
+                    LoginOption::PleaseVerify => {
+                        println!("The server hasn't seen that email before, so you'll need to verify it.");
+                        println!("It should have sent a code to your inbox; please enter it here:");
+                        let code: String = read!("{}\n");
+
+                        if !server.verify_user(&account, &code)? {
+                            println!("The code was incorrect, please try again.");
+                            return Ok(())
+                        }
+                    },
+                    LoginOption::BadPassword => {
+                        println!("The server said that you have the wrong password for {}", &account.email)
+                    }
+                    _ => {}
+                }
+
+                server.set_account(account.clone());
+                println!("I successfully signed you into {} as {}", server.identifier_string(), &account.email);
             }
         }
         Ok(())

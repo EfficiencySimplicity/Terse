@@ -8,8 +8,6 @@ use crate::tui::App;
 use crate::posts::Post;
 use crate::network::{Account, ServerList, SearchMenu, SearchResults};
 
-pub mod account_subcommand;
-use account_subcommand::*;
 pub mod server_subcommand;
 use server_subcommand::*;
 
@@ -36,8 +34,6 @@ pub enum Cli {
     Pub {title: String, path: PathBuf},
     #[command(subcommand, name = "--server")]
     Server(ServerSubcommand),
-    #[command(subcommand, name = "--account")]
-    Account(AccountSubcommand),
     #[command(name = "--whoami")]
     Whoami,
     
@@ -88,7 +84,7 @@ impl Cli {
             Cli::Stats             => Self::process_stats(&server_list),
             Cli::Pub {title, path} => Self::process_pub(&server_list, title, path),
             Cli::Server(command)   => command.process(&mut server_list),
-            Cli::Account(command)  => command.process(&mut server_list),
+            //Cli::Account(command)  => command.process(&mut server_list),
             Cli::Whoami            => Self::process_whoami(&server_list),
 
             #[cfg(debug_assertions)]

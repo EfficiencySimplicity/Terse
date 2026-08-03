@@ -107,7 +107,7 @@ impl ServerList {
             Err(AddServerError::ServerAlreadyExists)?
         }
 
-        let server = Server::new(url);
+        let server = Server::new(url, None);
         
         server.exists_and_is_a_terse_server()?;
 

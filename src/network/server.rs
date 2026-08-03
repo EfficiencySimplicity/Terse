@@ -22,21 +22,21 @@ use serde::{Serialize, Deserialize};
 pub struct Server {   
     url: Url, 
     client: Client,
-    accounts: Vec<Account>,
+    account: Option<Account>,
 }
 
 impl Server {
 
-    pub fn new(url: Url) -> Self {
-        Self {url, client: Client::new(), accounts: vec![]}
-    }
-    
-    pub fn with_accounts(url: Url, accounts: Vec<Account>) -> Self {
-        Self {url, client: Client::new(), accounts: accounts}
+    pub fn new(url: Url, account: Option<Account>) -> Self {
+        Self {url, client: Client::new(), account}
     }
 
     pub fn url(&self) -> Url {
         self.url.clone()
+    }
+
+    pub fn set_account(&mut self, account: Account) {
+        self.account = Some(account)
     }
 
     pub fn identifier_string(&self) -> String {
@@ -63,6 +63,42 @@ impl Server {
         url.set_path(route);
         url.set_query(Some(query.as_ref()));
         return url;
+    }
+
+    // Does this account exist and is the passcode correct?!
+    // pub fn credentials_are_valid(self, account: Account) -> Result<bool, Error> {
+    //     Ok(
+    //         self.client.get(self.with_params("account/exists", ""))
+    //         .body(serde_json::to_string(&account)?)
+    //         .send()?
+    //         .json::<bool>()?
+    //     )
+    // }
+
+    // test the server, etc
+    pub fn request_login(&self, account: &Account) -> Result<LoginOption, Error> {
+        Ok(
+            self.client.post(self.with_params("user/login", ""))
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .body(serde_json::to_string(&account)?)
+            .send()?
+            .json::<LoginOption>()?
+        )
+    }
+
+    // This, with some changes, could be merged with request_login
+    pub fn verify_user(&self, account: &Account, code: &str) -> Result<bool, Error> {
+        // Edge cases:
+        // - The account has like, a bad email address ("asfasodfhaoiuf/s.as.ai" or so)
+        //     (but this fn is only called after request_login, so it'd be caught then)
+        Ok(
+            // I don't wanna hafta figure out how to stick the code in the body too.
+            self.client.post(self.with_params("user/verify", format!("code={code}")))
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .body(serde_json::to_string(&account)?)
+            .send()?
+            .json::<bool>()?
+        )
     }
 
     pub fn get_post(&self, id: u16) -> Result<Post, Error> {
@@ -105,20 +141,9 @@ impl Server {
 
     // in an accounts module? The server class is a bit big...
 
-    pub fn create_account(&mut self, account: Account) -> Result<String, Error>{
-        Ok(
-            self.client.post(self.with_params("accounts/create", ""))
+    pub fn request_verify_email(&mut self, email: String) -> Result<(), Error> {
+        let text = self.client.post(self.with_params("accounts/create/please", format!("email={email}")))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
-            .body(serde_json::to_string::<Account>(&account).expect("The account should always be valid"))
-            .send()?
-            .text()?
-        )
-    }
-
-    pub fn request_create_account(&mut self, account: Account) -> Result<(), Error> {
-        let text = self.client.post(self.with_params("accounts/create/please", ""))
-            .header(reqwest::header::CONTENT_TYPE, "application/json")
-            .body(serde_json::to_string::<Account>(&account).expect("The account should always be valid"))
             .send()?
             .text()?;
         
@@ -129,94 +154,6 @@ impl Server {
         Ok(())
     }
 
-    // Better known as verifying the account.
-    pub fn finalize_create_account(&mut self, account: Account, code: &str) -> Result<(), Error> {
-        let text = self.client.post(self.with_params("accounts/verify", format!("username={}&code={code}", account.username)))
-            .send()?
-            .text()?;
-
-        // The server is silent if it's ok and only returns text if it has a problem
-        if !text.is_empty() {
-            return Err(Error::msg(text))
-        }
-
-        self.accounts.push(account);
-        Ok(())
-    }
-
-    // This fn does not pleas me
-    pub fn could_create_account(&self, email: Option<&str>, username: Option<&str>) -> Result<AccountCreationMessage, Error> {
-        let mut query = String::new();
-
-        if let Some(email) = email {
-            query.push_str(&format!("email={email}&"));
-        }
-        if let Some(username) = username {
-            query.push_str(&format!("username={username}"));
-        }
-
-        Ok(
-            self.client.get(self.with_params("accounts/could-create", query))
-            .send()?
-            .json::<AccountCreationMessage>()?
-        )
-    }
-
-    pub fn login_account(&mut self, account: Account) -> Result<(), Error> {
-        let accepted = self.client.get(self.with_params("accounts/login", format!("username={}&password={}", account.username, account.password)))
-        .send()?
-        .json::<bool>()?;
-        
-        if accepted {
-            self.accounts.push(account);
-            Ok(())
-        } else {
-            Err(Error::msg("The account couldn't be logged into"))
-        }
-
-        // If we just port over the password each time, why bother to do this first step
-        // of asking the server if we can have the account?
-        // Well, then we'd have a useless account in memory.
-        // Plus, whattabout when an account gets deleted externally? A whole 'nother problem
-    }
-
-    // This should ask the server to create a deletion code and send an email to the
-    // user's inbox, returning an error if the server has a problem
-    pub fn request_delete_account(&self, username: &str) -> Result<(), Error> {
-        let text = self.client.post(self.with_params("accounts/delete/please", format!("username={username}")))
-            .send()?
-            .text()?;
-        
-        // The server is silent if it's ok and only returns text if it has a problem
-        if !text.is_empty() {
-            return Err(Error::msg(text))
-        }
-        Ok(())
-    }
-
-    // This is pretty much the above. Ya know! This can be D.R.Y.
-    pub fn finalize_delete_account(&mut self, username: &str, code: String) -> Result<(), Error> {
-        let text = self.client.post(self.with_params("accounts/delete", format!("username={username}&code={code}")))
-            .send()?
-            .text()?;
-
-        // The server is silent if it's ok and only returns text if it has a problem
-        if !text.is_empty() {
-            return Err(Error::msg(text))
-        }
-
-        self.remove_account(username)?;
-        Ok(())
-    }
-
-    pub fn remove_account(&mut self, username: &str) -> Result<(), Error> {
-        let idx = self.accounts.iter().position(|x| x.username == username);
-        match idx {
-            Some(n) => _ = self.accounts.remove(n),
-            None => _ = Err(Error::msg("The account you are deleting isn't in the accounts list for the current server"))?
-        }
-        Ok(())
-    }
 
     pub fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
         Ok(
@@ -231,10 +168,8 @@ impl Display for Server {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut i = IndentWriter::new("\t", f);
         writeln!(i, "{}", self.identifier_string().as_str())?;
-        writeln!(i, "Accounts: {}", self.accounts.len())?;
-        for account in &self.accounts {
-            writeln!(i, "{}", account)?;
-        }
+        // This works just as well with only x.email, but I like the pretty colors over privacy
+        writeln!(i, "{}", self.account.clone().map_or(String::from("(Not signed in)"), |x| format!("Signed in as {}", x)))?;
         Ok(())
     }
 }
@@ -242,18 +177,18 @@ impl Display for Server {
 #[derive(Deserialize, Serialize)]
 pub struct ServerSerializer {
     pub url: String,
-    pub accounts: Vec<Account>,
+    pub account: Option<Account>
 }
 
 impl From<ServerSerializer> for Server {
     fn from(value: ServerSerializer) -> Self {
-        Self::with_accounts(Url::parse(&value.url).expect("Could not parse server!"), value.accounts)
+        Self::new(Url::parse(&value.url).expect("Could not parse server!"), value.account)
     }
 }
 
 impl Into<ServerSerializer> for Server {
     fn into(self) -> ServerSerializer {
-        ServerSerializer { url: String::from(self.url.as_str()), accounts: self.accounts.clone() }
+        ServerSerializer { url: String::from(self.url.as_str()), account: self.account.clone() }
     }
 }
 
@@ -299,4 +234,12 @@ impl From<reqwest::Error> for ServerValidityError {
     fn from(_value: reqwest::Error) -> Self {
         ServerValidityError::CannotConnect
     }
+}
+
+// What the server sends back when you ask to login
+#[derive(Deserialize)]
+pub enum LoginOption {
+    PleaseVerify,
+    Success,
+    BadPassword,
 }
