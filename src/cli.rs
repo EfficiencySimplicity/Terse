@@ -118,10 +118,6 @@ impl Cli {
     fn process_pub(server_list: &mut ServerList, title: String, path: PathBuf) -> Result<(), Error> {
         let server = server_list.selected()?;
 
-        if !server.is_signed_in() {
-            return Err(Error::msg("You aren't signed in to this server, so you cannot publish; try using the    trs --server login    command"))
-        }
-
         // There could be a wrapper for fs errors that provides better printing
         // 'I couldn't read the path' is good enough, and after a semicolon; great!
         let content = std::fs::read_to_string(&path)

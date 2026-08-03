@@ -115,7 +115,13 @@ impl Server {
     pub fn publish(&self, post: Post) -> Result<(), Error> {
         // https://docs.rs/reqwest/latest/reqwest/blocking/struct.RequestBuilder.html
         
-        let response = self.client.post(self.with_params("posts", ""))
+        if !self.is_signed_in() {
+            return Err(Error::msg("You aren't signed in to this server, so you cannot publish; try using the    trs --server login    command"))
+        }
+
+        // https://stackoverflow.com/questions/499591/are-https-urls-encrypted
+        // So I can place the account credentials within the query! Yippee!
+        let response = self.client.post(self.with_params("posts", format!("user={}", serde_json::to_string(&self.account.clone().unwrap())?)))
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .body(serde_json::to_string(&post)?)
         .send()?;
