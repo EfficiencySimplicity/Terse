@@ -32,3 +32,11 @@ impl Display for PostSizeError {
         )
     }
 }
+
+// Assuming you are logged in, and you get a valid post to send,
+// This represents all errors the server can send back
+// that you'd have no way of checking client-side
+pub enum PublishingError {
+    PostTooLarge { max_size: u64 },
+    Timeout { time_remaining: u64 },
+}
