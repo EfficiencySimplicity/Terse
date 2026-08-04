@@ -127,9 +127,9 @@ impl Cli {
         // to avoid unwrapping?
         let post = Post {title: title.clone(), content: content};
 
-        server.publish(post)?;
+        let message = server.publish(post)?;
 
-        println!("I was able to publish your post, \"{title}\"");
+        println!("{message}");
         Ok(())
     }
 

@@ -5,9 +5,7 @@ use std::fmt::{Display, Formatter, Write};
 use bytesize::ByteSize;
 
 use crate::network::{Account, SearchResult};
-use crate::posts::{Post, PostSizeError};
-
-use indent_write::fmt::IndentWriter;
+use crate::posts::{Post, PublishingResult};
 
 // RIP: use std::borrow::Borrow; I have no idea why you even existed or if I even wrote you.
 
@@ -112,7 +110,7 @@ impl Server {
         )
     }
 
-    pub fn publish(&self, post: Post) -> Result<(), Error> {
+    pub fn publish(&self, post: Post) -> Result<PublishingResult, Error> {
         // https://docs.rs/reqwest/latest/reqwest/blocking/struct.RequestBuilder.html
         
         if !self.is_signed_in() {
@@ -121,22 +119,13 @@ impl Server {
 
         // https://stackoverflow.com/questions/499591/are-https-urls-encrypted
         // So I can place the account credentials within the query! Yippee!
-        let response = self.client.post(self.with_params("posts", format!("user={}", serde_json::to_string(&self.account.clone().unwrap())?)))
-        .header(reqwest::header::CONTENT_TYPE, "application/json")
-        .body(serde_json::to_string(&post)?)
-        .send()?;
-        
-        // https://docs.rs/reqwest/latest/reqwest/struct.StatusCode.html
-        match response.status() {
-            StatusCode::OK => (),
-            StatusCode::PAYLOAD_TOO_LARGE => {
-                return Err(response.json::<PostSizeError>()?)?;
-            }
-            // TODO: this needs a better error system
-            other => return Err(ServerValidityError::Other(other))?
-        }
-
-        Ok(())
+        Ok(
+            self.client.post(self.with_params("posts", format!("user={}", serde_json::to_string(&self.account.clone().unwrap())?)))
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .body(serde_json::to_string(&post)?)
+            .send()?
+            .json::<PublishingResult>()?
+        )
     }
 
     pub fn get_stats(&self) -> Result<ServerStats, Error> {
