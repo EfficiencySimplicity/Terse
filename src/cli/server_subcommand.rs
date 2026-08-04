@@ -31,7 +31,7 @@ impl ServerSubcommand {
                 println!("I successfully set the server to {idx}: {}", server.identifier_string());
             }
             Self::List { show_passwords } => {
-                println!("{}", if show_passwords {server_list.with_passwords()?} else {server_list.to_string()});
+                println!("{}", if show_passwords {server_list.string_with_passwords()?} else {server_list.to_string()});
             }
             Self::Login { email, password } => {
                 let server = server_list.selected()?;

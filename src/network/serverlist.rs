@@ -136,12 +136,12 @@ impl ServerList {
         }
     }
 
-    pub fn with_passwords(&self) -> Result<String, std::fmt::Error> {
+    pub fn string_with_passwords(&self) -> Result<String, std::fmt::Error> {
         let mut s = String::new();
         writeln!(s, "Servers: {}", self.servers.len())?;
 
         for server in &self.servers {
-            writeln!(s, "{}", server.with_password()?)?;
+            writeln!(s, "{}", server.string_with_password()?)?;
         }
 
         Ok(s)

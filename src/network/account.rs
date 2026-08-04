@@ -30,7 +30,7 @@ impl Display for Account {
 }
 
 impl Account {
-    pub fn with_password(&self) -> String {
+    pub fn string_with_password(&self) -> String {
         format!("{} ({})", Colorize::red(self.email.as_str()), Colorize::blue(self.password.as_str()))
     }
 }
