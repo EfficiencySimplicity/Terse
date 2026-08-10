@@ -1,0 +1,16 @@
+Login:
+
+    To log into the server you're on, run
+
+    trs --server login email@email.com password123
+    
+    with whatever your email and password is.
+
+    If the server hasn't seen the email before, it creates
+    a new user and sends a verification code to your email.
+    It'll ask you to enter it in, and your new account will
+    be created with the email and password you provided.
+
+    If the user already exists, then it'll make sure you have
+    the right password and sign ya in, so you can begin
+    publishing posts.

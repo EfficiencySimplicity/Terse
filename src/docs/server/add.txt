@@ -1,0 +1,9 @@
+Adding:
+
+    To add to the list of servers, run 
+
+    trs --server add https://acoolserver.com
+
+    with whatever the url of the server you want to connect to is.
+
+    This adds the server to the list (assuming all goes well), but you won't be signed in.

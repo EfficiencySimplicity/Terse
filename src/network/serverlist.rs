@@ -140,8 +140,8 @@ impl ServerList {
         let mut s = String::new();
         writeln!(s, "Servers: {}", self.servers.len())?;
 
-        for server in &self.servers {
-            writeln!(s, "{}", server.string_with_password()?)?;
+        for (i, server) in self.servers.iter().enumerate() {
+            writeln!(s, "{i}: {}", server.string_with_password()?)?;
         }
 
         Ok(s)
@@ -153,8 +153,8 @@ impl std::fmt::Display for ServerList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Servers: {}", self.servers.len())?;
 
-        for server in &self.servers {
-            writeln!(f, "{server}")?;
+        for (i, server) in self.servers.iter().enumerate() {
+            writeln!(f, "{i}: {server}")?;
         }
 
         Ok(())

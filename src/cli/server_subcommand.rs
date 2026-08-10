@@ -5,10 +5,15 @@ use crate::network::server::LoginOption;
 
 #[derive(Subcommand)]
 pub enum ServerSubcommand {
+    #[command(override_help = include_str!("../docs/server/add.txt"))]
     Add {url: Url},
+    #[command(override_help = include_str!("../docs/server/remove.txt"))]
     Remove {url: Url},
+    #[command(override_help = include_str!("../docs/server/set.txt"))]
     Set {idx: usize},
+    #[command(override_help = include_str!("../docs/server/login.txt"))]
     Login {email: String, password: String},
+    #[command(override_help = include_str!("../docs/server/list.txt"))]
     // https://stackoverflow.com/questions/60458705/how-do-i-specify-a-boolean-command-line-flag-using-clap
     List {#[clap(short('p'), action)] show_passwords: bool},
 }

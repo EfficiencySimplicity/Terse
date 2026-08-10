@@ -1,0 +1,7 @@
+Whoami in Terse!
+
+Just run
+
+trs --whoami
+
+and Terse will tell you who you are!

@@ -25,16 +25,17 @@ use dev_subcommand::*;
 // https://github.com/clap-rs/clap/blob/master/examples/tutorial_derive/03_04_subcommands.rs
 
 #[derive(Parser)]
+#[command(disable_help_flag = true, override_help = include_str!("docs/main.txt"))]
 pub enum Cli {
-    #[command(name = "--search")]
+    #[command(name = "--search", override_help = include_str!("docs/search.txt"))]
     Search {query: Vec<String>},
-    #[command(name = "--stats")]
+    #[command(name = "--stats",  override_help = include_str!("docs/stats.txt"))]
     Stats,
-    #[command(name = "--pub")]
+    #[command(name = "--pub",    override_help = include_str!("docs/pub.txt"))]
     Pub {title: String, path: PathBuf},
-    #[command(subcommand, name = "--server")]
+    #[command(subcommand, name = "--server", override_help = include_str!("docs/server/main.txt"))]
     Server(ServerSubcommand),
-    #[command(name = "--whoami")]
+    #[command(name = "--whoami", override_help = include_str!("docs/whoami.txt"))]
     Whoami,
     
     // eeyou do not GET access to this pro-prietary subcommando!!!
@@ -56,7 +57,7 @@ impl Cli {
             // https://pythonexamples.org/rust/how-to-get-first-n-characters-in-string
             // https://www.dotnetperls.com/starts-with-rust
 
-            if !command.starts_with("-") {
+            if !(command.starts_with("-") || command == "help"){
                 // search shortcut! Stick a --search in there and parse it!
                 let mut search_insert = std::env::args().into_iter().collect::<Vec<String>>();
                 search_insert.insert(1, "--search".to_string());
