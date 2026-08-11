@@ -2,10 +2,31 @@ Publishing in Terse
 
 trs --pub
 
+
 for uploading a file you do 
 
     trs --pub -t "One Cool Trick To Prevent Segfaults", -p path/to/the/file.txt
 
-I.E. (-t), then the name, then (-p), then the path to the file
+I.E. (-t), then the name, and / or (-p), then the path to the file.
+
+You must provide at least one of the two values (i.e. (-p and path) or (-t and title))
+
+
+If you provide only the path, Terse formats the file's name to look something like this:
+
+    Title Of The Post
+
+and uses that as the title.
+
+trs --pub -p me/terse-posts/how-to-center-a-div -> publishes with title: How To Center A Div
+
+
+If you provide only the title, Terse opens up your default editor
+(if there is a problem with the $EDITOR shell var, it just tries Vim instead)
+and publishes what you write.
+
+trs --pub -t "A Cool Title" -> opens editor
+
+
 You must be signed into the current server to publish,
 for rate-limiting reasons :)

@@ -5,7 +5,7 @@ pub enum DevSubcommand {
 }
 
 impl DevSubcommand {
-    pub fn process(self, server_list: &mut ServerList) -> Result<(), Error> {
+    pub fn process(self, _server_list: &mut ServerList) -> Result<(), Error> {
         Ok(())
     }
 }

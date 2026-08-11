@@ -30,18 +30,17 @@ use dev_subcommand::*;
 pub enum Cli {
     #[command(name = "--search", override_help = include_str!("docs/search.txt"))]
     Search {query: Vec<String>},
+
     #[command(name = "--stats",  override_help = include_str!("docs/stats.txt"))]
     Stats,
+
     #[command(name = "--pub",    override_help = include_str!("docs/pub.txt"))]
     #[group(required=true)]
-    Pub {
-        #[arg(short)]
-        title: Option<String>,
-        #[arg(short)]
-        path: Option<PathBuf>,
-    },
+    Pub {#[arg(short)] title: Option<String>, #[arg(short)] path: Option<PathBuf>},
+
     #[command(subcommand, name = "--server", override_help = include_str!("docs/server/main.txt"))]
     Server(ServerSubcommand),
+
     #[command(name = "--whoami", override_help = include_str!("docs/whoami.txt"))]
     Whoami,
     
@@ -54,7 +53,7 @@ pub enum Cli {
 impl Cli {
     pub fn from_args() -> Self {
 
-        // if the first argument isn't a flag (doesn't start with -)
+        // if the first argument isn't a flag (doesn't start with -) and isn't 'help',
         // that's a shortcut for searching; so we insert a --search command
         // and parse from it, for your convenience!
 
