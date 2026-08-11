@@ -8,6 +8,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bytesize",
+ "capitalize",
  "clap",
  "colored",
  "crossterm",
@@ -207,6 +208,12 @@ name = "bytesize"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bd91ee7b2422bcb158d90ef4d14f75ef67f340943fc4149891dcce8f8b972a3"
+
+[[package]]
+name = "capitalize"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b5271031022835ee8c7582fe67403bd6cb3d962095787af7921027234bab5bf"
 
 [[package]]
 name = "castaway"

@@ -5,11 +5,12 @@ use url::Url;
 use std::path::PathBuf;
 
 use crate::tui::App;
-use crate::posts::Post;
 use crate::network::{Account, ServerList, SearchMenu, SearchResults};
 
 pub mod server_subcommand;
 use server_subcommand::*;
+
+pub mod pub_command;
 
 #[cfg(debug_assertions)]
 pub mod dev_subcommand;
@@ -32,7 +33,13 @@ pub enum Cli {
     #[command(name = "--stats",  override_help = include_str!("docs/stats.txt"))]
     Stats,
     #[command(name = "--pub",    override_help = include_str!("docs/pub.txt"))]
-    Pub {title: String, path: PathBuf},
+    #[group(required=true)]
+    Pub {
+        #[arg(short)]
+        title: Option<String>,
+        #[arg(short)]
+        path: Option<PathBuf>,
+    },
     #[command(subcommand, name = "--server", override_help = include_str!("docs/server/main.txt"))]
     Server(ServerSubcommand),
     #[command(name = "--whoami", override_help = include_str!("docs/whoami.txt"))]
@@ -83,7 +90,7 @@ impl Cli {
         let run_result = match self {
             Cli::Search {query}    => Self::process_query(&server_list, query),
             Cli::Stats             => Self::process_stats(&server_list),
-            Cli::Pub {title, path} => Self::process_pub(&mut server_list, title, path),
+            Cli::Pub {title, path} => pub_command::process(&mut server_list, title, path),
             Cli::Server(command)   => command.process(&mut server_list),
             Cli::Whoami            => Self::process_whoami(&server_list),
 
@@ -112,25 +119,6 @@ impl Cli {
         let stats = server.get_stats()?;
         
         println!("{stats}");
-        Ok(())
-    }
-
-    // Maybe make custom errors for publishing, etc etc etc...
-    fn process_pub(server_list: &mut ServerList, title: String, path: PathBuf) -> Result<(), Error> {
-        let server = server_list.selected()?;
-
-        // There could be a wrapper for fs errors that provides better printing
-        // 'I couldn't read the path' is good enough, and after a semicolon; great!
-        let content = std::fs::read_to_string(&path)
-            .or(Err(Error::msg("I couldn't read the path you gave me")))?;
-
-        // TODO: Is there a better way to manage content with the above match
-        // to avoid unwrapping?
-        let post = Post {title: title.clone(), content: content};
-
-        let message = server.publish(post)?;
-
-        println!("{message}");
         Ok(())
     }
 

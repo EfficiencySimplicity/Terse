@@ -4,8 +4,8 @@ trs --pub
 
 for uploading a file you do 
 
-    trs --pub "One Cool Trick To Prevent Segfaults", path/to/the/file.txt
+    trs --pub -t "One Cool Trick To Prevent Segfaults", -p path/to/the/file.txt
 
-I.E. the name and then the path to the file
+I.E. (-t), then the name, then (-p), then the path to the file
 You must be signed into the current server to publish,
 for rate-limiting reasons :)
