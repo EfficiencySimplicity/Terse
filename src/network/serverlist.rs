@@ -136,27 +136,29 @@ impl ServerList {
         }
     }
 
-    pub fn string_with_passwords(&self) -> Result<String, std::fmt::Error> {
+    pub fn as_string(&self, show_passwords: bool) -> String {
         let mut s = String::new();
-        writeln!(s, "Servers: {}", self.servers.len())?;
+        writeln!(s, "Servers: {}", self.servers.len()).expect("String writing should always work");
+        if self.servers.is_empty() {return s}
+        
+        writeln!(s, "Current server: {}", 
+            self.clone_selected()
+            .expect("Selected should be ok; there is at least 1 server")
+            .as_string(show_passwords, true)
+        ).expect("String writing should always work");
 
         for (i, server) in self.servers.iter().enumerate() {
-            writeln!(s, "{i}: {}", server.string_with_password()?)?;
+            writeln!(s, "{i}: {}", server.as_string(show_passwords, self.selected == Some(i))).expect("String writing should always work");
         }
 
-        Ok(s)
+        s
     }
 
 }
 
 impl std::fmt::Display for ServerList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Servers: {}", self.servers.len())?;
-
-        for (i, server) in self.servers.iter().enumerate() {
-            writeln!(f, "{i}: {server}")?;
-        }
-
+        writeln!(f, "{}", self.as_string(false))?;
         Ok(())
     }
 }

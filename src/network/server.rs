@@ -1,15 +1,17 @@
 use reqwest::{StatusCode, blocking::Client};
+use serde::{Serialize, Deserialize};
+
+use colored::Colorize;
+use bytesize::ByteSize;
 use anyhow::Error;
 use url::Url;
-use std::fmt::{Display, Formatter, Write};
-use bytesize::ByteSize;
 
-use crate::network::{Account, SearchResult};
+use std::fmt::{Display, Formatter, Write};
+
+use crate::network::{LoginInfo, SearchResult};
 use crate::posts::{Post, PublishingResult};
 
 // RIP: use std::borrow::Borrow; I have no idea why you even existed or if I even wrote you.
-
-use serde::{Serialize, Deserialize};
 
 // https://stackoverflow.com/questions/63369629/how-can-i-split-up-a-large-impl-over-multiple-files
 
@@ -20,25 +22,25 @@ use serde::{Serialize, Deserialize};
 pub struct Server {   
     url: Url, 
     client: Client,
-    account: Option<Account>,
+    login_info: Option<LoginInfo>,
 }
 
 impl Server {
 
-    pub fn new(url: Url, account: Option<Account>) -> Self {
-        Self {url, client: Client::new(), account}
+    pub fn new(url: Url, login_info: Option<LoginInfo>) -> Self {
+        Self {url, client: Client::new(), login_info}
     }
 
     pub fn url(&self) -> Url {
         self.url.clone()
     }
 
-    pub fn set_account(&mut self, account: Account) {
-        self.account = Some(account)
+    pub fn set_login_info(&mut self, login_info: LoginInfo) {
+        self.login_info = Some(login_info)
     }
 
     pub fn is_signed_in(&self) -> bool {
-        self.account.is_some()
+        self.login_info.is_some()
     }
 
     pub fn identifier_string(&self) -> String {
@@ -48,7 +50,7 @@ impl Server {
     pub fn user_string(&self) -> String {
         return format!(
             "{} on {} ({})",
-            self.account.clone().map_or(String::from("(Not signed in)"), |x| x.email),
+            self.login_info.clone().map_or(String::from("(Not signed in)"), |x| x.email),
             self.url(),
             self.get_stats().map_or(String::from("Couldn't get name"), |x| x.server_name))
     }
@@ -76,26 +78,26 @@ impl Server {
     }
 
     // test the server, etc
-    pub fn request_login(&self, account: &Account) -> Result<LoginOption, Error> {
+    pub fn request_login(&self, login_info: &LoginInfo) -> Result<LoginOption, Error> {
         Ok(
             self.client.post(self.with_params("user/login", ""))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
-            .body(serde_json::to_string(&account)?)
+            .body(serde_json::to_string(&login_info)?)
             .send()?
             .json::<LoginOption>()?
         )
     }
 
     // This, with some changes, could be merged with request_login
-    pub fn verify_user(&self, account: &Account, code: &str) -> Result<bool, Error> {
+    pub fn verify_user(&self, login_info: &LoginInfo, code: &str) -> Result<bool, Error> {
         // Edge cases:
-        // - The account has like, a bad email address ("asfasodfhaoiuf/s.as.ai" or so)
+        // - The login info has like, a bad email address ("asfasodfhaoiuf/s.as.ai" or so)
         //     (but this fn is only called after request_login, so it'd be caught then)
         Ok(
             // I don't wanna hafta figure out how to stick the code in the body too.
             self.client.post(self.with_params("user/verify", format!("code={code}")))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
-            .body(serde_json::to_string(&account)?)
+            .body(serde_json::to_string(&login_info)?)
             .send()?
             .json::<bool>()?
         )
@@ -118,9 +120,9 @@ impl Server {
         }
 
         // https://stackoverflow.com/questions/499591/are-https-urls-encrypted
-        // So I can place the account credentials within the query! Yippee!
+        // So I can place the login info within the query! Yippee!
         Ok(
-            self.client.post(self.with_params("posts", format!("user={}", serde_json::to_string(&self.account.clone().unwrap())?)))
+            self.client.post(self.with_params("posts", format!("user={}", serde_json::to_string(&self.login_info.clone().unwrap())?)))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .body(serde_json::to_string(&post)?)
             .send()?
@@ -144,18 +146,26 @@ impl Server {
         )
     }
 
-    pub fn string_with_password(&self) -> Result<String, std::fmt::Error> {
+    pub fn as_string(&self, show_password: bool, selected: bool) -> String {
         let mut s = String::new();
-        writeln!(s, "{}", self.identifier_string().as_str())?;
-        writeln!(s, "{}", self.account.clone().map_or(String::from("(Not signed in)"), |x| format!("Signed in as {}", x.string_with_password())))?;
-        Ok(s)
+
+        let identifier = self.identifier_string();
+        if selected {
+            writeln!(s, "{}", Colorize::yellow(identifier.as_str())).expect("String writing should always work");
+        } else {
+            writeln!(s, "{}", identifier).expect("String writing should always work");
+        }
+        writeln!(s, "{}", self.login_info.clone().map_or(
+            String::from("(Not signed in)"), 
+            |x| format!("Signed in as {}", x.as_string(show_password)))
+        ).expect("String writing should always work");
+        s
     }
 }
 
 impl Display for Server {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{}", self.identifier_string().as_str())?;
-        writeln!(f, "{}", self.account.clone().map_or(String::from("(Not signed in)"), |x| format!("Signed in as {x}")))?;
+        write!(f, "{}", self.as_string(false, false))?;
         Ok(())
     }
 }
@@ -163,18 +173,18 @@ impl Display for Server {
 #[derive(Deserialize, Serialize)]
 pub struct ServerSerializer {
     pub url: String,
-    pub account: Option<Account>
+    pub login_info: Option<LoginInfo>
 }
 
 impl From<ServerSerializer> for Server {
     fn from(value: ServerSerializer) -> Self {
-        Self::new(Url::parse(&value.url).expect("Could not parse server!"), value.account)
+        Self::new(Url::parse(&value.url).expect("Could not parse server!"), value.login_info)
     }
 }
 
 impl Into<ServerSerializer> for Server {
     fn into(self) -> ServerSerializer {
-        ServerSerializer { url: String::from(self.url.as_str()), account: self.account.clone() }
+        ServerSerializer { url: String::from(self.url.as_str()), login_info: self.login_info.clone() }
     }
 }
 

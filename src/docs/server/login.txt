@@ -8,7 +8,7 @@ Login:
 
     If the server hasn't seen the email before, it creates
     a new user and sends a verification code to your email.
-    It'll ask you to enter it in, and your new account will
+    It'll ask you to enter it in, and a new user will
     be created with the email and password you provided.
 
     If the user already exists, then it'll make sure you have

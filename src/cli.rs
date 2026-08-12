@@ -5,7 +5,7 @@ use url::Url;
 use std::path::PathBuf;
 
 use crate::tui::App;
-use crate::network::{Account, ServerList, SearchMenu, SearchResults};
+use crate::network::{LoginInfo, ServerList, SearchMenu, SearchResults};
 
 pub mod server_subcommand;
 use server_subcommand::*;
@@ -127,7 +127,7 @@ impl Cli {
         match maybe_server {
             Ok(server) => {
                 println!("You are on {}", server.identifier_string());
-                println!("TODO: have the server store the current account");
+                println!("TODO: have the server store the current login info");
             },
             Err(_) => {
                 // You DEFINITELY have none; it can't be outta bounds, right?!

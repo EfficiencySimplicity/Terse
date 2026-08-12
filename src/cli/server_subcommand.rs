@@ -36,45 +36,45 @@ impl ServerSubcommand {
                 println!("I successfully set the server to {idx}: {}", server.identifier_string());
             }
             Self::List { show_passwords } => {
-                println!("{}", if show_passwords {server_list.string_with_passwords()?} else {server_list.to_string()});
+                println!("{}", server_list.as_string(show_passwords));
             }
             Self::Login { email, password } => {
                 let server = server_list.selected()?;
-                let account = Account::new(email, password);
+                let login_info = LoginInfo::new(email, password);
 
                 // THIS IS NOT TRUE
                 // So we ask to sign in with this info;
                 // And if the user is already verified and the password matches,
                 // We're let in.
-                // Otherwise the server creates the account and asks us for the code.
+                // Otherwise the server creates the login info and asks us for the code.
 
                 // THIS IS CURRENTLY TRUE
-                // We ask to 'create an account on the server'
+                // We ask to 'create an login info on the server'
                 // I.e. "Server, trust that I own this email address!"
                 // Well, the server don't trust us, it says, 'prove it!'
-                // It sends us a code, and we use it as our account passcode,
+                // It sends us a code, and we use it as our login info passcode,
                 // doing a quick check first to the server to ask, 'hey, did we do it right?'
                 // and so on.
 
-                match server.request_login(&account)? {
+                match server.request_login(&login_info)? {
                     LoginOption::PleaseVerify => {
                         println!("The server hasn't seen that email before, so you'll need to verify it.");
                         println!("It should have sent a code to your inbox; please enter it here:");
                         let code: String = read!("{}\n");
 
-                        if !server.verify_user(&account, &code)? {
+                        if !server.verify_user(&login_info, &code)? {
                             println!("The code was incorrect, please try again.");
                             return Ok(())
                         }
                     },
                     LoginOption::BadPassword => {
-                        println!("The server said that you have the wrong password for {}", &account.email)
+                        println!("The server said that you have the wrong password for {}", &login_info.email)
                     }
                     _ => {}
                 }
 
-                server.set_account(account.clone());
-                println!("I successfully signed you into {} as {}", server.identifier_string(), &account.email);
+                server.set_login_info(login_info.clone());
+                println!("I successfully signed you into {} as {}", server.identifier_string(), &login_info.email);
             }
         }
         Ok(())
