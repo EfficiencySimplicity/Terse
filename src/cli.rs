@@ -6,6 +6,7 @@ use std::path::PathBuf;
 
 use crate::tui::App;
 use crate::network::{LoginInfo, ServerList, SearchMenu, SearchResults};
+use crate::data::{self, DataStorageError};
 
 pub mod server_subcommand;
 use server_subcommand::*;
@@ -73,13 +74,19 @@ impl Cli {
         return Self::parse()
     }
 
+    pub fn get_server_list() -> Result<(PathBuf, ServerList), DataStorageError> {
+        // https://users.rust-lang.org/t/tuple-of-results-into-a-result-of-tuples/120191/2
+        let server_file = data::ensure_config_file(data::get_config_dir()?.join("servers.json"))?;
+        Ok((server_file.clone(), ServerList::from_config_file(server_file.clone())?))
+    }
+
     pub fn process(self) {
         // Having this here does mean that some commands that don't need
         // disk access at all could fail, but it is WORTH IT.
         // Besides, if you can't read the config file that's enough of an 
         // issue to stop doing anything.
 
-        let mut server_list = match ServerList::from_config_file() {
+        let (server_file, mut server_list) = match Self::get_server_list() {
             Ok(s) => s,
             Err(_) => {
                 eprintln!("There was an error reading from disk :(");
@@ -99,7 +106,7 @@ impl Cli {
         };
 
         match run_result {
-            Ok(_) => if let Err(e) = server_list.store() {
+            Ok(_) => if let Err(e) = server_list.store(server_file) {
                 println!("I got an error when trying to write to disk: \n{e}")
             }
             Err(e) => eprintln!("{e}")
