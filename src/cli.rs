@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use anyhow::Error;
-use url::Url;
 
+use url::Url;
 use std::path::PathBuf;
 
 use crate::tui::App;
@@ -18,8 +18,6 @@ pub mod dev_subcommand;
 use dev_subcommand::*;
 
 // https://docs.rs/clap/latest/clap/_derive/
-// TODO: -s hand commands
-// TODO: help
 // NOTE: I could move stats into the server and so go --server stats?...
 
 // This helped me get a Vec<String> into an enum:
@@ -78,6 +76,9 @@ impl Cli {
     pub fn process(self) {
         // Having this here does mean that some commands that don't need
         // disk access at all could fail, but it is WORTH IT.
+        // Besides, if you can't read the config file that's enough of an 
+        // issue to stop doing anything.
+
         let mut server_list = match ServerList::from_config_file() {
             Ok(s) => s,
             Err(_) => {
@@ -99,7 +100,7 @@ impl Cli {
 
         match run_result {
             Ok(_) => if let Err(e) = server_list.store() {
-                println!("Error writing to disk: {e}")
+                println!("I got an error when trying to write to disk: \n{e}")
             }
             Err(e) => eprintln!("{e}")
         }
