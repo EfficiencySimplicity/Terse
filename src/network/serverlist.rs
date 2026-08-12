@@ -25,7 +25,7 @@ impl ServerList {
         // This should explicitly check for no servers...
         self.selected.map(|x| &mut self.servers[x as usize]).ok_or(SelectedServerError::NoServers)
     }
-    
+
     // For when you need the selected server but ain't gonna modify it.
     pub fn clone_selected(&self) -> Result<Server, SelectedServerError> {
         Ok(self.selected.map(|x| self.servers[x as usize].clone()).ok_or(SelectedServerError::NoServers)?)
@@ -88,7 +88,7 @@ impl ServerList {
         Ok(())
     }
 
-    pub fn add_server(&mut self, url: Url) -> Result<(), Error> {
+    pub fn add_server(&mut self, url: Url, switch: bool) -> Result<&mut Server, Error> {
 
         // Sometimes different urls redirect to the same url in the end;
         // I feel like this should be allowed, Terse should just assume
@@ -104,8 +104,10 @@ impl ServerList {
         self.servers.push(server);
         // NOTE: maybe always hop onto the brand new server?
         // or maybe a flag to do so or avoid doing so
-        if self.servers.len() == 1 { self.selected = Some(0) }
-        Ok(self.store()?)
+        if self.servers.len() == 1 { self.selected = Some(0); };
+        if switch {self.set_server(self.servers.len() - 1)?; };
+
+        return Ok(self.selected().expect("By now we should have a selected server"))
     }
 
     pub fn remove_server(&mut self, url: Url) -> Result<(), Error> {
@@ -120,7 +122,7 @@ impl ServerList {
         if self.selected.expect("The selected element should be Some, since the length of the server list is non-zero") 
         > self.servers.len() - 1 { self.selected = Some(self.servers.len() - 1) }
 
-        Ok(self.store()?)
+        Ok(())
     }
 
     // NOTE: maybe return the selected server?
@@ -131,7 +133,6 @@ impl ServerList {
             Err(SelectedServerError::OutOfBounds{ idx, max: self.servers.len() - 1})?
         } else {
             self.selected = Some(idx);
-            self.store()?;
             Ok(self.selected().expect("This should point to a server, of course!"))
         }
     }

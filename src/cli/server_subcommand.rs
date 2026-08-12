@@ -6,7 +6,7 @@ use crate::network::server::LoginOption;
 #[derive(Subcommand)]
 pub enum ServerSubcommand {
     #[command(override_help = include_str!("../docs/server/add.txt"))]
-    Add {url: Url},
+    Add {url: Url, #[arg(short)] stay: bool},
     #[command(override_help = include_str!("../docs/server/remove.txt"))]
     Remove {url: Url},
     #[command(override_help = include_str!("../docs/server/set.txt"))]
@@ -21,8 +21,8 @@ pub enum ServerSubcommand {
 impl ServerSubcommand {
     pub fn process(self, server_list: &mut ServerList) -> Result<(), Error> {
         match self {
-            Self::Add { url } => {
-                server_list.add_server(url.clone())?;
+            Self::Add { url, stay } => {
+                server_list.add_server(url.clone(), !stay)?;
                 println!("I successfully added {url} to the list of servers!");
             }
             Self::Remove { url } => {

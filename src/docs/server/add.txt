@@ -7,3 +7,9 @@ Adding:
     with whatever the url of the server you want to connect to is.
 
     This adds the server to the list (assuming all goes well), but you won't be signed in.
+
+
+    By default, you switch over to the new server when you add it;
+    to prevent this, add an -s (for "stay") at the end:
+
+    trs --server add https://acoolserver.com -s
