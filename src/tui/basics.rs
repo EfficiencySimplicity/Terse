@@ -6,9 +6,14 @@ use ratatui::{
 
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 
+#[cfg(debug_assertions)]
+use crate::tui::Blinker;
+
 #[derive(Default)]
 pub struct App {
     exit: bool,
+    #[cfg(debug_assertions)]
+    blinker: Blinker
 }
 
 impl App {
@@ -30,6 +35,9 @@ impl App {
 
                 // https://stackoverflow.com/questions/30026893/how-to-use-a-map-over-vectors#30026986
                 window.render(top, frame.buffer_mut());
+
+                #[cfg(debug_assertions)]
+                self.blinker.render(bottom, frame.buffer_mut());
                 Span::from("ESC to quit").on_red().into_right_aligned_line().render(bottom, frame.buffer_mut());
             })?;
 
