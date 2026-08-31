@@ -1,5 +1,6 @@
 use ratatui::{
     prelude::Stylize,
+    style::Style,
     DefaultTerminal, layout::{Layout, Direction, Constraint}, text::Span, widgets::{Block, BorderType, Widget},
 };
 
@@ -51,6 +52,7 @@ pub trait Window {
 
 pub fn get_default_block<'a>() -> Block<'a> {
     return Block::bordered()
-        .border_type(BorderType::Rounded)
+        .border_type(BorderType::Plain)
+        .border_style(Style::new().light_red())
         //.border_style(Style::new().white().on_white())
 }
