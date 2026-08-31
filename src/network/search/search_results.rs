@@ -21,14 +21,7 @@ pub struct SearchResult {
 // https://www.reddit.com/r/rust/comments/7zm0j2/intofrom_for_nonconsuming_conversions/
 impl<'a> From<&'a SearchResult> for Text<'a> {
     fn from(value: &'a SearchResult) -> Self {
-        let text = Text::from(vec![
-            Line::from(" "),
-            Line::from(Span::from(&value.title)),
-            //Line::from(value.author.clone()).red(),
-            Line::from(" "),
-        ]);
-
-        return text;
+        return Text::from(vec![Line::from(Span::from(&value.title))]);
     }
 }
 
@@ -55,7 +48,7 @@ impl<'a> SearchResults<'a> {
 impl<'a> Widget for &mut SearchResults<'a> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let container = tui::get_default_block()
-            .title_bottom("( ((j / k) + enter) or (id) to select )");
+            .title_bottom(" j: down - k: up - enter: select ");
 
         StatefulWidget::render(
             List::new(&self.links)
