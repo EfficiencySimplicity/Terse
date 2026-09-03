@@ -1,6 +1,6 @@
 use ratatui::{layout::{Constraint, Layout, Rect}, buffer::Buffer, widgets::{StatefulWidget, Widget, Scrollbar, ScrollbarOrientation, ScrollbarState, Paragraph}};
 use crossterm::event::KeyCode;
-use crate::tui::{self, Window};
+use crate::tui::{self, Window, Label};
 use super::Post;
 
 pub struct PostWidget {
@@ -14,14 +14,29 @@ impl PostWidget {
     }
 }
 
-impl Widget for &mut PostWidget {
+impl Window for PostWidget {
+    fn handle_key_event(&mut self, key: KeyCode) {
+        match key {
+            KeyCode::Char('j') => {self.scroll_state.next()}
+            KeyCode::Char('k') => {self.scroll_state.prev()}
+            _ => {}
+        }
+    }
+
+    fn get_labels() -> Vec<String> {
+        return vec![
+            Label::new("j", "down"),
+            Label::new("k", "up"),
+        ]
+    }
+
     // TODO: something with Margin? see
     // https://ratatui.rs/examples/widgets/scrollbar/
     // TODO: all these in the same block! Scrollbar as part of it!
     // Scrollbar styyyyling!
     // TODO: PostWidget by itself! Organize!
     // TODO: Scrollbar actually to scale!
-    fn render(self, area: Rect, buf: &mut Buffer) {
+    fn render_contents(&mut self, area: Rect, buf: &mut Buffer) {
 
         let layout = Layout::horizontal(vec![
                 Constraint::Fill(1),
@@ -31,20 +46,9 @@ impl Widget for &mut PostWidget {
 
         // TODO: eliminate this clone() by any means necessary.
         Paragraph::new(self.post.content.clone())
-        .block(tui::get_default_block().title_bottom("( j / k to scroll )"))
         .scroll((self.scroll_state.get_position() as u16, 0))
         .render(layout[0], buf);
 
         StatefulWidget::render(Scrollbar::new(ScrollbarOrientation::VerticalRight), layout[1], buf, &mut self.scroll_state);
-    }
-}
-
-impl Window for PostWidget {
-    fn handle_key_event(&mut self, key: KeyCode) {
-        match key {
-            KeyCode::Char('j') => {self.scroll_state.next()}
-            KeyCode::Char('k') => {self.scroll_state.prev()}
-            _ => {}
-        }
     }
 }

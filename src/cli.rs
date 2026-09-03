@@ -117,7 +117,8 @@ impl Cli {
         let server = server_list.clone_selected()?;
         let results = server.search(words)?;
 
-        App::default().run(&mut SearchMenu::new(SearchResults::new(&server, results)))?;
+
+        App::default().run(&mut SearchMenu::new(SearchResults::new(results)))?;
         Ok(())
     }
 

@@ -1,4 +1,4 @@
-use ratatui::widgets::{Widget, StatefulWidget, List, ListState};
+use ratatui::widgets::{StatefulWidget, List, ListState};
 use ratatui::prelude::{Rect, Buffer, Text};
 use ratatui::style::Modifier;
 
@@ -21,8 +21,17 @@ impl<T> Selectable<T> where for<'a> Text<'a>: From<&'a T> {
     }
 }
 
-impl<T> Widget for &mut Selectable<T> where for<'a> Text<'a>: From<&'a T> {
-    fn render(self, area: Rect, buf: &mut Buffer) {
+impl <T> Window for &mut Selectable<T> where for<'a> Text<'a>: From<&'a T> {
+    fn handle_key_event(&mut self, key: KeyCode) {
+        match key {
+            // TODO: clamp after!
+            KeyCode::Char('j') => self.state.scroll_down_by(1),
+            KeyCode::Char('k') => self.state.scroll_up_by(1),
+            _ => (),
+        }
+    }
+
+    fn render_contents(&mut self, area: Rect, buf: &mut Buffer) {
         let container = get_default_block()
             .title_bottom("( (j / k) + enter to select )");
 
@@ -36,16 +45,5 @@ impl<T> Widget for &mut Selectable<T> where for<'a> Text<'a>: From<&'a T> {
             buf,
             &mut self.state,
         );
-    }
-}
-
-impl <T> Window for &mut Selectable<T> where for<'a> Text<'a>: From<&'a T> {
-    fn handle_key_event(&mut self, key: KeyCode) {
-        match key {
-            // TODO: clamp after!
-            KeyCode::Char('j') => self.state.scroll_down_by(1),
-            KeyCode::Char('k') => self.state.scroll_up_by(1),
-            _ => (),
-        }
     }
 }

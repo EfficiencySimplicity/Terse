@@ -1,3 +1,5 @@
+use crate::tui::Window;
+
 use ratatui::{
     prelude::Stylize,
     style::Style,
@@ -17,11 +19,11 @@ pub struct App {
 }
 
 impl App {
-    pub fn run<T: Window>(&mut self, window: &mut T) -> Result<(), std::io::Error> where for<'a> &'a mut T: Widget {
+    pub fn run<T: Window>(&mut self, window: &mut T) -> Result<(), std::io::Error> {
         ratatui::run(|terminal| self.run_loop(terminal, window))
     }
 
-    pub fn run_loop<T: Window>(&mut self, terminal: &mut DefaultTerminal, window: &mut T) -> Result<(), std::io::Error> where for<'a> &'a mut T: Widget {
+    pub fn run_loop<T: Window>(&mut self, terminal: &mut DefaultTerminal, window: &mut T) -> Result<(), std::io::Error> {
         while !self.exit {
             terminal.draw(|frame| {
                 // https://docs.rs/ratatui/latest/ratatui/prelude/struct.Layout.html#method.areas
@@ -54,13 +56,14 @@ impl App {
     }
 }
 
-pub trait Window {
-    fn handle_key_event(&mut self, key: KeyCode);
-}
-
 pub fn get_default_block<'a>() -> Block<'a> {
     return Block::bordered()
         .border_type(BorderType::Plain)
         .border_style(Style::new().light_red())
+        //.border_style(Style::new().white().on_white())
+}
+
+pub fn get_selected_block<'a>() -> Block<'a> {
+    return get_default_block().border_style(Style::new().light_blue())
         //.border_style(Style::new().white().on_white())
 }

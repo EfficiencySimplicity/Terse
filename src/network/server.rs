@@ -8,7 +8,7 @@ use url::Url;
 
 use std::fmt::{Display, Formatter, Write};
 
-use crate::network::{LoginInfo, SearchResult};
+use crate::network::{LoginInfo, SearchResult, SearchResultHeader};
 use crate::posts::{Post, PublishingResult};
 
 // RIP: use std::borrow::Borrow; I have no idea why you even existed or if I even wrote you.
@@ -19,7 +19,7 @@ use crate::posts::{Post, PublishingResult};
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(from="ServerSerializer")]
 #[serde(into="ServerSerializer")]
-pub struct Server {   
+pub struct Server {
     url: Url, 
     client: Client,
     login_info: Option<LoginInfo>,
@@ -138,12 +138,12 @@ impl Server {
         )
     }
 
-    pub fn search(&self, query: Vec<String>) -> Result<Vec<SearchResult>, Error> {
-        Ok(
-            self.client.get(self.with_params("search", format!("query={}", query.join(" "))))
+    pub fn search<'s>(&'s self, query: Vec<String>) -> Result<Vec<SearchResult<'s>>, Error> {
+        let headers = self.client.get(self.with_params("search", format!("query={}", query.join(" "))))
             .send()?
-            .json::<Vec<SearchResult>>()?
-        )
+            .json::<Vec<SearchResultHeader>>()?;
+
+        Ok(headers.into_iter().map(|x| SearchResult::new(x, &self)).collect())
     }
 
     pub fn as_string(&self, show_password: bool, selected: bool) -> String {

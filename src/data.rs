@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::path::PathBuf;
 use directories::ProjectDirs;
+
 pub fn get_config_dir() -> Result<PathBuf, DataStorageError>{
     // We store to a different data file on debug builds vs. release builds
     // because the official data file is a pain to access...
