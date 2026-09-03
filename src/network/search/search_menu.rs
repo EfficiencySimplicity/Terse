@@ -1,5 +1,5 @@
 use ratatui::layout::{ Layout, Direction, Constraint };
-use crate::tui::{self, Window, Label};
+use crate::tui::{self, FramedWindow, Window, Label};
 use super::SearchResults;
 use crate::posts::PostWidget;
 
@@ -51,10 +51,6 @@ impl<'a> Window for SearchMenu<'a> {
     }
 
     fn render(&mut self, area: Rect, buf: &mut Buffer) {
-        self.render_contents(area, buf);
-    }
-
-    fn render_contents(&mut self, area: Rect, buf: &mut Buffer) {
         let [left, right] = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![
@@ -63,12 +59,11 @@ impl<'a> Window for SearchMenu<'a> {
             ])
             .areas(area);
 
-        (&mut self.results).render(left, buf);
-        
-        // TODO: revamp!
         if let SearchMenuMode::Answer(post_widget) = &mut self.mode {
-            post_widget.render_with_labels(right, buf, &mut vec![Label::new("b", "back")]);
+            (&mut self.results).render_unselected(left, buf);
+            post_widget.render_selected(right, buf, &mut vec![Label::new("b", "back")]);
         } else {
+            (&mut self.results).render_selected(left, buf, &mut vec![]);
             // Later this can be... a Future or an Option or something...
             // that renders even if it has one or not.
             tui::get_default_block().render(right, buf);

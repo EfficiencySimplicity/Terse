@@ -31,7 +31,7 @@ impl <T> Window for &mut Selectable<T> where for<'a> Text<'a>: From<&'a T> {
         }
     }
 
-    fn render_contents(&mut self, area: Rect, buf: &mut Buffer) {
+    fn render(&mut self, area: Rect, buf: &mut Buffer) {
         let container = get_default_block()
             .title_bottom("( (j / k) + enter to select )");
 

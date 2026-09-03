@@ -1,4 +1,4 @@
-use crate::tui::{ Window, Label};
+use crate::tui::{FramedWindow, Window, Label};
 use crate::network::Server;
 use crate::posts::Post;
 
@@ -84,15 +84,7 @@ impl<'s> Window for &mut SearchResults<'s> {
         }
     }
 
-    fn get_labels() -> Vec<String> {
-        return vec![
-            Label::new("j", "down"),
-            Label::new("k", "up"),
-            Label::new("enter", "select"),
-        ]
-    }
-
-    fn render_contents(&mut self, area: Rect, buf: &mut Buffer) {
+    fn render(&mut self, area: Rect, buf: &mut Buffer) {
         StatefulWidget::render(
             List::new(self.links.iter().map(|x| &x.header))
                 // This can also be a style.
@@ -102,5 +94,15 @@ impl<'s> Window for &mut SearchResults<'s> {
             buf,
             &mut self.list_state,
         );
+    }
+}
+
+impl<'s> FramedWindow for &mut SearchResults<'s> {
+    fn get_labels() -> Vec<String> {
+        return vec![
+            Label::new("j", "down"),
+            Label::new("k", "up"),
+            Label::new("enter", "select"),
+        ]
     }
 }

@@ -1,21 +1,32 @@
 use crate::tui;
 
 use ratatui::prelude::{Widget, Buffer, Rect};
+use ratatui::widgets::Block;
+use ratatui::style::{Style};
 use crossterm::event::KeyCode;
 
 pub trait Window {
     fn handle_key_event(&mut self, key: KeyCode);
-    fn render_contents(&mut self, area: Rect, buf: &mut Buffer);
-    fn render(&mut self, area: Rect, buf: &mut Buffer) {self.render_with_labels(area, buf, &mut vec![])}
-    fn render_with_labels(&mut self, area: Rect, buf: &mut Buffer, labels: &mut Vec<String>) {
+    fn render(&mut self, area: Rect, buf: &mut Buffer);
+}
+
+pub trait FramedWindow: Window {
+    fn render_selected(&mut self, area: Rect, buf: &mut Buffer, labels: &mut Vec<String>) {
         labels.append(&mut Self::get_labels());
-        let block = tui::get_default_block()
-            .title_bottom(labels.join("-"));
-        
+        self.render_in_block(area, buf, tui::get_default_block()
+            .title_bottom(labels.join("-")));
+    }
+
+    fn render_unselected(&mut self, area: Rect, buf: &mut Buffer) {
+        self.render_in_block(area, buf, tui::get_default_block());
+        buf.set_style(area, Style::new().gray());
+    }
+
+    fn render_in_block(&mut self, area: Rect, buf: &mut Buffer, block: Block) {
         let inner = block.inner(area);
         block.render(area, buf);
-        self.render_contents(inner, buf);
+        self.render(inner, buf);
     }
-    // this could be in render()
+
     fn get_labels() -> Vec<String> {vec![]}
 }

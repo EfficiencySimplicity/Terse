@@ -1,6 +1,6 @@
 use ratatui::{layout::{Constraint, Layout, Rect}, buffer::Buffer, widgets::{StatefulWidget, Widget, Scrollbar, ScrollbarOrientation, ScrollbarState, Paragraph}};
 use crossterm::event::KeyCode;
-use crate::tui::{self, Window, Label};
+use crate::tui::{self, Window, FramedWindow, Label};
 use super::Post;
 
 pub struct PostWidget {
@@ -23,20 +23,13 @@ impl Window for PostWidget {
         }
     }
 
-    fn get_labels() -> Vec<String> {
-        return vec![
-            Label::new("j", "down"),
-            Label::new("k", "up"),
-        ]
-    }
-
     // TODO: something with Margin? see
     // https://ratatui.rs/examples/widgets/scrollbar/
     // TODO: all these in the same block! Scrollbar as part of it!
     // Scrollbar styyyyling!
     // TODO: PostWidget by itself! Organize!
     // TODO: Scrollbar actually to scale!
-    fn render_contents(&mut self, area: Rect, buf: &mut Buffer) {
+    fn render(&mut self, area: Rect, buf: &mut Buffer) {
 
         let layout = Layout::horizontal(vec![
                 Constraint::Fill(1),
@@ -50,5 +43,14 @@ impl Window for PostWidget {
         .render(layout[0], buf);
 
         StatefulWidget::render(Scrollbar::new(ScrollbarOrientation::VerticalRight), layout[1], buf, &mut self.scroll_state);
+    }
+}
+
+impl FramedWindow for PostWidget {
+    fn get_labels() -> Vec<String> {
+        return vec![
+            Label::new("j", "down"),
+            Label::new("k", "up"),
+        ]
     }
 }
