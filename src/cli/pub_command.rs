@@ -14,8 +14,8 @@ use capitalize::Capitalize;
 use anyhow::Error;
 
 
-pub fn process(server_list: &mut ServerList, title: Option<String>, path: Option<PathBuf>) -> Result<(), Error> {
-    let server = server_list.selected()?;
+pub fn process(title: Option<String>, path: Option<PathBuf>) -> Result<(), Error> {
+    let server = ServerList::global_data().selected()?;
 
     let title = match title {
         Some(s) => s,

@@ -1,6 +1,6 @@
 use ratatui::{layout::{Constraint, Layout, Rect}, buffer::Buffer, widgets::{StatefulWidget, Widget, Scrollbar, ScrollbarOrientation, ScrollbarState, Paragraph}};
-use crossterm::event::KeyCode;
-use crate::tui::{self, Window, FramedWindow, Label};
+use crossterm::event::{KeyCode, KeyEvent};
+use crate::tui::{Window, FramedWindow, Label, App};
 use super::Post;
 
 pub struct PostWidget {
@@ -15,8 +15,8 @@ impl PostWidget {
 }
 
 impl Window for PostWidget {
-    fn handle_key_event(&mut self, key: KeyCode) {
-        match key {
+    fn handle_key_event(&mut self, _app: &App, key: KeyEvent) {
+        match key.code {
             KeyCode::Char('j') => {self.scroll_state.next()}
             KeyCode::Char('k') => {self.scroll_state.prev()}
             _ => {}

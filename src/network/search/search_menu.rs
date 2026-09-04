@@ -1,6 +1,6 @@
 use ratatui::layout::{ Layout, Direction, Constraint };
-use crate::tui::{self, FramedWindow, Window, Label};
-use super::SearchResults;
+use crate::tui::{self, FramedWindow, Label, Window, App};
+use super::{SearchResults, SearchBar};
 use crate::posts::PostWidget;
 
 use ratatui::{
@@ -9,61 +9,108 @@ use ratatui::{
     widgets::Widget,
 };
 
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
 pub enum SearchMenuMode {
     Results,
     Answer (PostWidget),
+    Search,
 }
 
 pub struct SearchMenu<'a> {
     results: SearchResults<'a>,
+    search_bar: SearchBar,
     mode: SearchMenuMode,
 }
 
+// TODO: it should *create* a search menu and prompt *it* to search...
 impl<'a> SearchMenu<'a> {
-    pub fn new(results: SearchResults<'a>) -> Self {
-        Self {results: results, mode: SearchMenuMode::Results}
+    pub fn new(query: String, results: SearchResults<'a>) -> Self {
+        Self {results, search_bar: SearchBar::new(query), mode: SearchMenuMode::Results}
     }
 }
 
 
 impl<'a> Window for SearchMenu<'a> {
-    fn handle_key_event(&mut self, key: KeyCode) {
+    fn handle_key_event(&mut self, app: &App, key: KeyEvent) {
+        match &self.mode {
+            SearchMenuMode::Results | SearchMenuMode::Answer(_) => {
+                if let KeyCode::Char('k') = key.code && key.modifiers.contains(KeyModifiers::CONTROL) {
+                    self.mode = SearchMenuMode::Search;
+                    return
+                }
+            }
+            SearchMenuMode::Search => {
+                if let KeyCode::Char('j') = key.code && key.modifiers.contains(KeyModifiers::CONTROL) {
+                    self.mode = SearchMenuMode::Results;
+                    return
+                }
+            }
+        }
+
         match &mut self.mode {
             SearchMenuMode::Results => {
-                match key {
+                match key.code {
                     KeyCode::Enter => {
                         self.mode = SearchMenuMode::Answer(PostWidget::new(self.results.get_selected_article()));
                     }
-                    _ => (&mut self.results).handle_key_event(key)
+                    _ => (&mut self.results).handle_key_event(app, key)
                 };
             }
             SearchMenuMode::Answer(post_widget) => {
-                match key {
+                match key.code {
                     KeyCode::Char('b') => {
                         self.mode = SearchMenuMode::Results;
                     }
-                    _ => post_widget.handle_key_event(key),
+                    _ => post_widget.handle_key_event(app, key),
                 }
+            }
+            SearchMenuMode::Search => {
+                match key.code {
+                    KeyCode::Enter => {
+                        let server_list = app.server_list;
+                        let server = server_list.selected().unwrap();
+                        let results = server.search(self.search_bar.text.clone()).unwrap();
+                        self.results = SearchResults::new(results);
+                        self.mode = SearchMenuMode::Results;
+                    }
+                    _ => {}
+                }
+                self.search_bar.handle_key_event(app, key);
             }
         }
     }
 
     fn render(&mut self, area: Rect, buf: &mut Buffer) {
+        let [top, bottom] = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(vec![
+                Constraint::Length(3),
+                Constraint::Fill(1),
+            ])
+            .areas(area);
+
         let [left, right] = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(vec![
                 Constraint::Length(std::cmp::max(self.results.get_width() as u16 + 8, 35)),
                 Constraint::Fill(1),
             ])
-            .areas(area);
+            .areas(bottom);
 
         if let SearchMenuMode::Answer(post_widget) = &mut self.mode {
+            (&mut self.search_bar).render_unselected(top, buf);
             (&mut self.results).render_unselected(left, buf);
             post_widget.render_selected(right, buf, &mut vec![Label::new("b", "back")]);
-        } else {
+        } else if let SearchMenuMode::Results = &mut self.mode {
+            (&mut self.search_bar).render_unselected(top, buf);
             (&mut self.results).render_selected(left, buf, &mut vec![]);
+            // Later this can be... a Future or an Option or something...
+            // that renders even if it has one or not.
+            tui::get_default_block().render(right, buf);
+        } else {
+            (&mut self.search_bar).render_selected(top, buf, &mut vec![Label::new("enter", "search")]);
+            (&mut self.results).render_unselected(left, buf);
             // Later this can be... a Future or an Option or something...
             // that renders even if it has one or not.
             tui::get_default_block().render(right, buf);

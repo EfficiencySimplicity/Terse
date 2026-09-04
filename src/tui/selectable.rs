@@ -2,7 +2,7 @@ use ratatui::widgets::{StatefulWidget, List, ListState};
 use ratatui::prelude::{Rect, Buffer, Text};
 use ratatui::style::Modifier;
 
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, KeyEvent};
 
 use crate::tui::*;
 
@@ -22,8 +22,8 @@ impl<T> Selectable<T> where for<'a> Text<'a>: From<&'a T> {
 }
 
 impl <T> Window for &mut Selectable<T> where for<'a> Text<'a>: From<&'a T> {
-    fn handle_key_event(&mut self, key: KeyCode) {
-        match key {
+    fn handle_key_event(&mut self, _app: &App, key: KeyEvent) {
+        match key.code {
             // TODO: clamp after!
             KeyCode::Char('j') => self.state.scroll_down_by(1),
             KeyCode::Char('k') => self.state.scroll_up_by(1),

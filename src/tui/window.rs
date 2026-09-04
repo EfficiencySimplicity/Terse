@@ -1,12 +1,12 @@
-use crate::tui;
+use crate::tui::{self, App};
 
 use ratatui::prelude::{Widget, Buffer, Rect};
 use ratatui::widgets::Block;
 use ratatui::style::{Style};
-use crossterm::event::KeyCode;
+use crossterm::event::KeyEvent;
 
 pub trait Window {
-    fn handle_key_event(&mut self, key: KeyCode);
+    fn handle_key_event(&mut self, app: &App, key: KeyEvent);
     fn render(&mut self, area: Rect, buf: &mut Buffer);
 }
 

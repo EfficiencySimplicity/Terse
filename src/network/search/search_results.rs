@@ -1,4 +1,4 @@
-use crate::tui::{FramedWindow, Window, Label};
+use crate::tui::{FramedWindow, Window, Label, App};
 use crate::network::Server;
 use crate::posts::Post;
 
@@ -6,7 +6,7 @@ use ratatui::widgets::{StatefulWidget, List, ListState};
 use ratatui::text::{Span, Line, Text};
 use ratatui::prelude::{Rect, Buffer, Modifier};
 
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, KeyEvent};
 
 use serde::Deserialize;
 
@@ -75,8 +75,8 @@ impl<'s> SearchResults<'s> {
 }
 
 impl<'s> Window for &mut SearchResults<'s> {
-    fn handle_key_event(&mut self, key: KeyCode) {
-        match key {
+    fn handle_key_event(&mut self, _app: &App, key: KeyEvent) {
+        match key.code {
             // TODO: clamp after!
             KeyCode::Char('j') => self.list_state.scroll_down_by(1),
             KeyCode::Char('k') => self.list_state.scroll_up_by(1),

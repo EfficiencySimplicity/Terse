@@ -1,9 +1,9 @@
+use crate::network::ServerList;
 use crate::tui::Window;
 
 use ratatui::{
     prelude::Stylize,
-    style::Style,
-    DefaultTerminal, layout::{Layout, Direction, Constraint}, text::Span, widgets::{Block, BorderType, Widget},
+    DefaultTerminal, layout::{Layout, Direction, Constraint}, text::Span, widgets::Widget,
 };
 
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
@@ -15,7 +15,7 @@ use crate::tui::Blinker;
 pub struct App {
     exit: bool,
     #[cfg(debug_assertions)]
-    blinker: Blinker
+    blinker: Blinker,
 }
 
 impl App {
@@ -47,23 +47,11 @@ impl App {
                 if let KeyEventKind::Press = key_event.kind {
                     match key_event.code {
                         KeyCode::Esc => self.exit = true,
-                        other => window.handle_key_event(other),
+                        _ => window.handle_key_event(&self, key_event),
                     }
                 }
             }
         }
         Ok(())
     }
-}
-
-pub fn get_default_block<'a>() -> Block<'a> {
-    return Block::bordered()
-        .border_type(BorderType::Plain)
-        .border_style(Style::new().light_red())
-        //.border_style(Style::new().white().on_white())
-}
-
-pub fn get_selected_block<'a>() -> Block<'a> {
-    return get_default_block().border_style(Style::new().light_blue())
-        //.border_style(Style::new().white().on_white())
 }

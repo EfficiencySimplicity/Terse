@@ -18,6 +18,7 @@ dependencies = [
  "features",
  "indent_write",
  "indoc",
+ "once_cell",
  "ratatui",
  "reqwest",
  "serde",

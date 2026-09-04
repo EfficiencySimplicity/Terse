@@ -94,44 +94,50 @@ impl Cli {
             }
         };
 
+        SERVER_LIST.set(server_list);
+
         let run_result = match self {
-            Cli::Search {query}    => Self::process_query(&server_list, query),
-            Cli::Stats             => Self::process_stats(&server_list),
-            Cli::Pub {title, path} => pub_command::process(&mut server_list, title, path),
-            Cli::Server(command)   => command.process(&mut server_list),
-            Cli::Whoami            => Self::process_whoami(&server_list),
+            Cli::Search {query}    => Self::process_query(query),
+            Cli::Stats             => Self::process_stats(),
+            Cli::Pub {title, path} => pub_command::process(title, path),
+            Cli::Server(command)   => command.process(),
+            Cli::Whoami            => Self::process_whoami(),
 
             #[cfg(debug_assertions)]
-            Cli::Dev(command)      => command.process(&mut server_list),
+            Cli::Dev(command)      => command.process(),
         };
 
         match run_result {
-            Ok(_) => if let Err(e) = server_list.store(server_file) {
+            Ok(_) => if let Err(e) = ServerList::global_data().store(server_file) {
                 println!("I got an error when trying to write to disk: \n{e}")
             }
             Err(e) => eprintln!("{e}")
         }
     }
 
-    fn process_query(server_list: &ServerList, words: Vec<String>) -> Result<(), Error> {
-        let server = server_list.clone_selected()?;
-        let results = server.search(words)?;
+    fn process_query(words: Vec<String>) -> Result<(), Error> {
+        let query = words.join(" ");
+        let server = ServerList::global_data().clone_selected()?;
+        let results = server.search(query.clone())?;
 
 
-        App::default().run(&mut SearchMenu::new(SearchResults::new(results)))?;
+        let mut app = App::default();
+        let mut search_menu = SearchMenu::new(query, SearchResults::new(results));
+
+        app.run(&mut search_menu)?;
         Ok(())
     }
 
-    fn process_stats(server_list: &ServerList) -> Result<(), Error> {
-        let server = server_list.clone_selected()?;
+    fn process_stats() -> Result<(), Error> {
+        let server = ServerList::global_data().clone_selected()?;
         let stats = server.get_stats()?;
         
         println!("{stats}");
         Ok(())
     }
 
-    fn process_whoami(server_list: &ServerList) -> Result<(), Error> {
-        let maybe_server = server_list.clone_selected();
+    fn process_whoami() -> Result<(), Error> {
+        let maybe_server = ServerList::global_data().clone_selected();
         match maybe_server {
             Ok(server) => {
                 println!("You are on {}", server.identifier_string());
