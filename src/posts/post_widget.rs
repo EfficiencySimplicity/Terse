@@ -15,7 +15,7 @@ impl PostWidget {
 }
 
 impl Window for PostWidget {
-    fn handle_key_event(&mut self, _app: &App, key: KeyEvent) {
+    fn handle_key_event(&mut self, key: KeyEvent) {
         match key.code {
             KeyCode::Char('j') => {self.scroll_state.next()}
             KeyCode::Char('k') => {self.scroll_state.prev()}

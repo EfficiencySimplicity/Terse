@@ -1,4 +1,4 @@
-use crate::network::ServerList;
+use crate::data::SERVER_LIST;
 use crate::posts::Post;
 
 use std::{
@@ -15,7 +15,8 @@ use anyhow::Error;
 
 
 pub fn process(title: Option<String>, path: Option<PathBuf>) -> Result<(), Error> {
-    let server = ServerList::global_data().selected()?;
+    let mut binding = SERVER_LIST.lock();
+    let server = binding.selected()?;
 
     let title = match title {
         Some(s) => s,

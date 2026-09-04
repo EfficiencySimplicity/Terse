@@ -1,3 +1,4 @@
+use crate::data::SERVER_LIST;
 use clap::{Parser, Subcommand};
 use anyhow::Error;
 
@@ -74,29 +75,14 @@ impl Cli {
         return Self::parse()
     }
 
-    pub fn get_server_list() -> Result<(PathBuf, ServerList), DataStorageError> {
-        // https://users.rust-lang.org/t/tuple-of-results-into-a-result-of-tuples/120191/2
-        let server_file = data::ensure_config_file(data::get_config_dir()?.join("servers.json"))?;
-        Ok((server_file.clone(), ServerList::from_config_file(server_file.clone())?))
-    }
 
-    pub fn process(self) {
+    pub fn process(self) -> Result<(), Error> {
         // Having this here does mean that some commands that don't need
         // disk access at all could fail, but it is WORTH IT.
         // Besides, if you can't read the config file that's enough of an 
         // issue to stop doing anything.
 
-        let (server_file, mut server_list) = match Self::get_server_list() {
-            Ok(s) => s,
-            Err(_) => {
-                eprintln!("There was an error reading from disk :(");
-                return
-            }
-        };
-
-        SERVER_LIST.set(server_list);
-
-        let run_result = match self {
+        match self {
             Cli::Search {query}    => Self::process_query(query),
             Cli::Stats             => Self::process_stats(),
             Cli::Pub {title, path} => pub_command::process(title, path),
@@ -105,21 +91,13 @@ impl Cli {
 
             #[cfg(debug_assertions)]
             Cli::Dev(command)      => command.process(),
-        };
-
-        match run_result {
-            Ok(_) => if let Err(e) = ServerList::global_data().store(server_file) {
-                println!("I got an error when trying to write to disk: \n{e}")
-            }
-            Err(e) => eprintln!("{e}")
         }
     }
 
     fn process_query(words: Vec<String>) -> Result<(), Error> {
         let query = words.join(" ");
-        let server = ServerList::global_data().clone_selected()?;
+        let server = SERVER_LIST.lock().clone_selected()?;
         let results = server.search(query.clone())?;
-
 
         let mut app = App::default();
         let mut search_menu = SearchMenu::new(query, SearchResults::new(results));
@@ -129,7 +107,7 @@ impl Cli {
     }
 
     fn process_stats() -> Result<(), Error> {
-        let server = ServerList::global_data().clone_selected()?;
+        let server = SERVER_LIST.lock().clone_selected()?;
         let stats = server.get_stats()?;
         
         println!("{stats}");
@@ -137,7 +115,7 @@ impl Cli {
     }
 
     fn process_whoami() -> Result<(), Error> {
-        let maybe_server = ServerList::global_data().clone_selected();
+        let maybe_server = SERVER_LIST.lock().clone_selected();
         match maybe_server {
             Ok(server) => {
                 println!("You are on {}", server.identifier_string());

@@ -22,7 +22,7 @@ impl<T> Selectable<T> where for<'a> Text<'a>: From<&'a T> {
 }
 
 impl <T> Window for &mut Selectable<T> where for<'a> Text<'a>: From<&'a T> {
-    fn handle_key_event(&mut self, _app: &App, key: KeyEvent) {
+    fn handle_key_event(&mut self, key: KeyEvent) {
         match key.code {
             // TODO: clamp after!
             KeyCode::Char('j') => self.state.scroll_down_by(1),

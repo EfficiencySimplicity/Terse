@@ -8,6 +8,7 @@ use url::Url;
 
 use std::fmt::{Display, Formatter, Write};
 
+use crate::data::CLIENT;
 use crate::network::{LoginInfo, SearchResult, SearchResultHeader};
 use crate::posts::{Post, PublishingResult};
 
@@ -21,14 +22,13 @@ use crate::posts::{Post, PublishingResult};
 #[serde(into="ServerSerializer")]
 pub struct Server {
     url: Url, 
-    client: Client,
     login_info: Option<LoginInfo>,
 }
 
 impl Server {
 
     pub fn new(url: Url, login_info: Option<LoginInfo>) -> Self {
-        Self {url, client: Client::new(), login_info}
+        Self {url, login_info}
     }
 
     pub fn url(&self) -> Url {
@@ -56,7 +56,7 @@ impl Server {
     }
 
     pub fn exists_and_is_a_terse_server(&self) -> Result<(), ServerValidityError> {
-        let status = self.client.get(self.with_params("exists-and-is-a-terse-server", ""))
+        let status = CLIENT.get(self.with_params("exists-and-is-a-terse-server", ""))
         .send()?.status();
 
         match status {
@@ -80,7 +80,7 @@ impl Server {
     // test the server, etc
     pub fn request_login(&self, login_info: &LoginInfo) -> Result<LoginOption, Error> {
         Ok(
-            self.client.post(self.with_params("user/login", ""))
+            CLIENT.post(self.with_params("user/login", ""))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .body(serde_json::to_string(&login_info)?)
             .send()?
@@ -95,7 +95,7 @@ impl Server {
         //     (but this fn is only called after request_login, so it'd be caught then)
         Ok(
             // I don't wanna hafta figure out how to stick the code in the body too.
-            self.client.post(self.with_params("user/verify", format!("code={code}")))
+            CLIENT.post(self.with_params("user/verify", format!("code={code}")))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .body(serde_json::to_string(&login_info)?)
             .send()?
@@ -106,7 +106,7 @@ impl Server {
     pub fn get_post(&self, id: u16) -> Result<Post, Error> {
         // https://docs.rs/url/latest/url/struct.Url.html#method.parse_with_params
         Ok(
-            self.client.get(self.with_params("posts", format!("id={id}")))
+            CLIENT.get(self.with_params("posts", format!("id={id}")))
             .send()?
             .json::<Post>()?
         )
@@ -122,7 +122,7 @@ impl Server {
         // https://stackoverflow.com/questions/499591/are-https-urls-encrypted
         // So I can place the login info within the query! Yippee!
         Ok(
-            self.client.post(self.with_params("posts", format!("user={}", serde_json::to_string(&self.login_info.clone().unwrap())?)))
+            CLIENT.post(self.with_params("posts", format!("user={}", serde_json::to_string(&self.login_info.clone().unwrap())?)))
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .body(serde_json::to_string(&post)?)
             .send()?
@@ -132,18 +132,18 @@ impl Server {
 
     pub fn get_stats(&self) -> Result<ServerStats, Error> {
         Ok(
-            self.client.get(self.with_params("stats", ""))
+            CLIENT.get(self.with_params("stats", ""))
             .send()?
             .json::<ServerStats>()?
         )
     }
 
-    pub fn search<'s>(&'s self, query: String) -> Result<Vec<SearchResult<'s>>, Error> {
-        let headers = self.client.get(self.with_params("search", format!("query={}", query)))
+    pub fn search(&self, query: String) -> Result<Vec<SearchResult>, Error> {
+        let headers = CLIENT.get(self.with_params("search", format!("query={}", query)))
             .send()?
             .json::<Vec<SearchResultHeader>>()?;
 
-        Ok(headers.into_iter().map(|x| SearchResult::new(x, &self)).collect())
+        Ok(headers.into_iter().map(|x| SearchResult::new(x, self.clone())).collect())
     }
 
     pub fn as_string(&self, show_password: bool, selected: bool) -> String {

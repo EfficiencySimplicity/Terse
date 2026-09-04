@@ -19,26 +19,28 @@ pub enum ServerSubcommand {
 }
 
 impl ServerSubcommand {
-    pub fn process(self, server_list: &mut ServerList) -> Result<(), Error> {
+    pub fn process(self) -> Result<(), Error> {
         match self {
             Self::Add { url, stay } => {
-                server_list.add_server(url.clone(), !stay)?;
+                SERVER_LIST.lock().add_server(url.clone(), !stay)?;
                 println!("I successfully added {url} to the list of servers!");
             }
             Self::Remove { url } => {
-                server_list.remove_server(url.clone())?;
+                SERVER_LIST.lock().remove_server(url.clone())?;
                 println!("I successfully removed {} from the list of servers", url);
             }
             Self::Set { idx } => {
+                let mut server_list = SERVER_LIST.lock();
                 let server = server_list.set_server(idx)?;
                 // If this wanted more stats... I'd just not globally error;
                 // I'd say "I successfully set the server to 4: [couldn't get name]""
                 println!("I successfully set the server to {idx}: {}", server.identifier_string());
             }
             Self::List { show_passwords } => {
-                println!("{}", server_list.as_string(show_passwords));
+                println!("{}", SERVER_LIST.lock().as_string(show_passwords));
             }
             Self::Login { email, password } => {
+                let mut server_list = SERVER_LIST.lock();
                 let server = server_list.selected()?;
                 let login_info = LoginInfo::new(email, password);
 

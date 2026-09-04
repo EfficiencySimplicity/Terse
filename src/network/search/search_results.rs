@@ -18,15 +18,15 @@ pub struct SearchResultHeader {
     pub postid: u16,
 }
 
-pub struct SearchResult<'s> {
+pub struct SearchResult {
     pub header: SearchResultHeader,
-    pub server: &'s Server,
+    pub server: Server,
     pub post: Option<Post>
 }
 
 
-impl<'s> SearchResult<'s> {
-    pub fn new(header: SearchResultHeader, server: &'s Server) -> Self {
+impl SearchResult {
+    pub fn new(header: SearchResultHeader, server: Server) -> Self {
         Self {header, server, post: None}
     }
 
@@ -44,19 +44,19 @@ impl<'s> SearchResult<'s> {
 }
 
 // https://www.reddit.com/r/rust/comments/7zm0j2/intofrom_for_nonconsuming_conversions/
-impl<'s> From<&'s SearchResultHeader> for Text<'s> {
-    fn from(value: &'s SearchResultHeader) -> Self {
+impl<'a> From<&'a SearchResultHeader> for Text<'a> {
+    fn from(value: &'a SearchResultHeader) -> Self {
         return Text::from(vec![Line::from(Span::from(&value.title))]);
     }
 }
 
-pub struct SearchResults<'s> {
-    links: Vec<SearchResult<'s>>,
+pub struct SearchResults {
+    links: Vec<SearchResult>,
     list_state: ListState,
 }
 
-impl<'s> SearchResults<'s> {
-    pub fn new(links: Vec<SearchResult<'s>>) -> Self {
+impl SearchResults{
+    pub fn new(links: Vec<SearchResult>) -> Self {
         let mut list_state = ListState::default();
         list_state.select_first();
 
@@ -74,8 +74,8 @@ impl<'s> SearchResults<'s> {
     }
 }
 
-impl<'s> Window for &mut SearchResults<'s> {
-    fn handle_key_event(&mut self, _app: &App, key: KeyEvent) {
+impl Window for &mut SearchResults {
+    fn handle_key_event(&mut self, key: KeyEvent) {
         match key.code {
             // TODO: clamp after!
             KeyCode::Char('j') => self.list_state.scroll_down_by(1),
@@ -97,7 +97,7 @@ impl<'s> Window for &mut SearchResults<'s> {
     }
 }
 
-impl<'s> FramedWindow for &mut SearchResults<'s> {
+impl FramedWindow for &mut SearchResults {
     fn get_labels() -> Vec<String> {
         return vec![
             Label::new("j", "down"),

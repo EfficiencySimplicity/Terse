@@ -1,5 +1,5 @@
 use ratatui::layout::{ Layout, Direction, Constraint };
-use crate::tui::{self, FramedWindow, Label, Window, App};
+use crate::{data, tui::{self, App, FramedWindow, Label, Window}};
 use super::{SearchResults, SearchBar};
 use crate::posts::PostWidget;
 
@@ -17,22 +17,22 @@ pub enum SearchMenuMode {
     Search,
 }
 
-pub struct SearchMenu<'a> {
-    results: SearchResults<'a>,
+pub struct SearchMenu {
+    results: SearchResults,
     search_bar: SearchBar,
     mode: SearchMenuMode,
 }
 
 // TODO: it should *create* a search menu and prompt *it* to search...
-impl<'a> SearchMenu<'a> {
-    pub fn new(query: String, results: SearchResults<'a>) -> Self {
+impl SearchMenu {
+    pub fn new(query: String, results: SearchResults) -> Self {
         Self {results, search_bar: SearchBar::new(query), mode: SearchMenuMode::Results}
     }
 }
 
 
-impl<'a> Window for SearchMenu<'a> {
-    fn handle_key_event(&mut self, app: &App, key: KeyEvent) {
+impl Window for SearchMenu {
+    fn handle_key_event(&mut self, key: KeyEvent) {
         match &self.mode {
             SearchMenuMode::Results | SearchMenuMode::Answer(_) => {
                 if let KeyCode::Char('k') = key.code && key.modifiers.contains(KeyModifiers::CONTROL) {
@@ -54,7 +54,7 @@ impl<'a> Window for SearchMenu<'a> {
                     KeyCode::Enter => {
                         self.mode = SearchMenuMode::Answer(PostWidget::new(self.results.get_selected_article()));
                     }
-                    _ => (&mut self.results).handle_key_event(app, key)
+                    _ => (&mut self.results).handle_key_event(key)
                 };
             }
             SearchMenuMode::Answer(post_widget) => {
@@ -62,13 +62,13 @@ impl<'a> Window for SearchMenu<'a> {
                     KeyCode::Char('b') => {
                         self.mode = SearchMenuMode::Results;
                     }
-                    _ => post_widget.handle_key_event(app, key),
+                    _ => post_widget.handle_key_event(key),
                 }
             }
             SearchMenuMode::Search => {
                 match key.code {
                     KeyCode::Enter => {
-                        let server_list = app.server_list;
+                        let mut server_list = data::SERVER_LIST.lock();
                         let server = server_list.selected().unwrap();
                         let results = server.search(self.search_bar.text.clone()).unwrap();
                         self.results = SearchResults::new(results);
@@ -76,7 +76,7 @@ impl<'a> Window for SearchMenu<'a> {
                     }
                     _ => {}
                 }
-                self.search_bar.handle_key_event(app, key);
+                self.search_bar.handle_key_event(key);
             }
         }
     }

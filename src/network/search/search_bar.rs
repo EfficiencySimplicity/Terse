@@ -20,7 +20,7 @@ impl SearchBar {
 }
 
 impl Window for SearchBar {
-	fn handle_key_event(&mut self, _app: &App, key: KeyEvent) {
+	fn handle_key_event(&mut self, key: KeyEvent) {
 		match key.code {
             KeyCode::Char(c) => {
                 self.text.push(c);

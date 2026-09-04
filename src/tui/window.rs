@@ -6,7 +6,7 @@ use ratatui::style::{Style};
 use crossterm::event::KeyEvent;
 
 pub trait Window {
-    fn handle_key_event(&mut self, app: &App, key: KeyEvent);
+    fn handle_key_event(&mut self, key: KeyEvent);
     fn render(&mut self, area: Rect, buf: &mut Buffer);
 }
 

@@ -1,11 +1,12 @@
 use std::fs::File;
 use std::path::PathBuf;
 use directories::ProjectDirs;
+use reqwest::blocking::Client;
 
 use crate::network::ServerList;
 
-use std::sync::Mutex;
-use std::process::{exit, ExitCode};
+use parking_lot::Mutex;
+use std::process::exit;
 use once_cell::sync::Lazy;
 
 pub fn get_config_dir() -> Result<PathBuf, DataStorageError>{
@@ -56,14 +57,29 @@ pub enum DataStorageError {
     CantWriteToFile,
 }
 
-
 pub static SERVER_LIST: Lazy<Mutex<ServerList>> = Lazy::new(|| {
-    let server_list = match || -> Result<ServerList, DataStorageError> {ServerList::from_config_file(ensure_config_file(get_config_dir()?)?)}() {
+    let server_list = match || -> Result<ServerList, DataStorageError> {ServerList::from_config_file(ensure_config_file(get_config_dir()?.join("servers.json"))?)}() {
         Ok(s) => s,
-        Err(_) => {
-            eprintln!("There was an error reading from disk :(");
-            exit(0x0010)
+        Err(e) => {
+            eprintln!("I had a problem loading a config file; {e}");
+            exit(1)
         }
     };
     Mutex::new(server_list)
+});
+
+pub fn store_server_list() {
+    let storage_file = match || -> Result<PathBuf, DataStorageError> {ensure_config_file(get_config_dir()?.join("servers.json"))}() {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("I had a problem storing a config file; {e}");
+            exit(1)
+        }
+    };
+
+    SERVER_LIST.lock().store(storage_file);
+}
+
+pub static CLIENT: Lazy<Client> = Lazy::new(|| {
+    Client::new()
 });

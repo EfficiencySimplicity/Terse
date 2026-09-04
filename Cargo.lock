@@ -19,6 +19,7 @@ dependencies = [
  "indent_write",
  "indoc",
  "once_cell",
+ "parking_lot",
  "ratatui",
  "reqwest",
  "serde",
