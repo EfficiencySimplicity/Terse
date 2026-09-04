@@ -12,8 +12,6 @@ use anyhow::Error;
 
 
 #[derive(Default, Clone, Serialize, Deserialize)]
-#[serde(from="ServerListSerializer")]
-#[serde(into="ServerListSerializer")]
 pub struct ServerList {
     pub servers: Vec<Server>,
     selected: Option<usize>,
@@ -127,25 +125,6 @@ impl std::fmt::Display for ServerList {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "{}", self.as_string(false))?;
         Ok(())
-    }
-}
-
-
-#[derive(Serialize, Deserialize)]
-pub struct ServerListSerializer {
-    pub servers: Vec<Server>,
-    pub selected: Option<usize>,
-}
-
-impl From<ServerListSerializer> for ServerList {
-    fn from(value: ServerListSerializer) -> Self {
-        ServerList { servers: value.servers, selected: value.selected }
-    }
-}
-
-impl Into<ServerListSerializer> for ServerList {
-    fn into(self) -> ServerListSerializer {
-        ServerListSerializer { servers: self.servers.clone(), selected: self.selected }
     }
 }
 

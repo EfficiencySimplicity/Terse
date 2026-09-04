@@ -99,18 +99,18 @@ impl Window for SearchMenu {
             .areas(bottom);
 
         if let SearchMenuMode::Answer(post_widget) = &mut self.mode {
-            (&mut self.search_bar).render_unselected(top, buf);
-            (&mut self.results).render_unselected(left, buf);
-            post_widget.render_selected(right, buf, &mut vec![Label::new("b", "back")]);
+            (&mut self.search_bar).render_unselected(top, buf, "ctrl+k");
+            (&mut self.results).render_unselected(left, buf, "b");
+            post_widget.render_selected(right, buf, &mut vec![]);
         } else if let SearchMenuMode::Results = &mut self.mode {
-            (&mut self.search_bar).render_unselected(top, buf);
+            (&mut self.search_bar).render_unselected(top, buf, "ctrl+k");
             (&mut self.results).render_selected(left, buf, &mut vec![]);
             // Later this can be... a Future or an Option or something...
             // that renders even if it has one or not.
             tui::get_default_block().render(right, buf);
         } else {
             (&mut self.search_bar).render_selected(top, buf, &mut vec![Label::new("enter", "search")]);
-            (&mut self.results).render_unselected(left, buf);
+            (&mut self.results).render_unselected(left, buf, "ctrl+j");
             // Later this can be... a Future or an Option or something...
             // that renders even if it has one or not.
             tui::get_default_block().render(right, buf);
