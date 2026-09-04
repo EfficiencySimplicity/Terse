@@ -1,4 +1,4 @@
-use crate::tui::{FramedWindow, Window, Label, App};
+use crate::tui::{FramedWindow, Window, Label};
 use crate::network::Server;
 use crate::posts::Post;
 
@@ -10,7 +10,6 @@ use crossterm::event::{KeyCode, KeyEvent};
 
 use serde::Deserialize;
 
-use anyhow::Error;
 
 #[derive(Deserialize, Debug)]
 pub struct SearchResultHeader {

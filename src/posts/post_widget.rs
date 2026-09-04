@@ -1,16 +1,18 @@
 use ratatui::{layout::{Constraint, Layout, Rect}, buffer::Buffer, widgets::{StatefulWidget, Widget, Scrollbar, ScrollbarOrientation, ScrollbarState, Paragraph}};
 use crossterm::event::{KeyCode, KeyEvent};
-use crate::tui::{Window, FramedWindow, Label, App};
+use crate::tui::{Window, FramedWindow, Label};
 use super::Post;
 
 pub struct PostWidget {
     post: Post,
+    height: usize,
     scroll_state: ScrollbarState,
 }
 
 impl PostWidget {
     pub fn new(post: Post) -> Self {
-        Self {post, scroll_state: ScrollbarState::new(100)}
+        let height = post.content.clone().lines().count();
+        Self {post, height, scroll_state: ScrollbarState::new(height).content_length(height)}
     }
 }
 
@@ -39,10 +41,17 @@ impl Window for PostWidget {
 
         // TODO: eliminate this clone() by any means necessary.
         Paragraph::new(self.post.content.clone())
-        .scroll((self.scroll_state.get_position() as u16, 0))
+        .scroll((std::cmp::min(self.scroll_state.get_position(), self.height.saturating_sub(area.height as usize)) as u16, 0))
         .render(layout[0], buf);
 
-        StatefulWidget::render(Scrollbar::new(ScrollbarOrientation::VerticalRight), layout[1], buf, &mut self.scroll_state);
+        StatefulWidget::render(
+            Scrollbar::new(ScrollbarOrientation::VerticalRight),
+            layout[1],
+            buf,
+            &mut ScrollbarState::new(
+                self.height.saturating_sub(area.height as usize)
+            ).position(std::cmp::min(self.scroll_state.get_position(), self.height.saturating_sub(area.height as usize)))
+        );
     }
 }
 

@@ -1,4 +1,4 @@
-use crate::network::ServerList;
+use std::time::Duration;
 use crate::tui::Window;
 
 use ratatui::{
@@ -43,13 +43,18 @@ impl App {
                 Span::from("ESC to quit").on_red().into_right_aligned_line().render(bottom, frame.buffer_mut());
             })?;
 
-            if let Event::Key(key_event) = event::read()? {
-                if let KeyEventKind::Press = key_event.kind {
-                    match key_event.code {
-                        KeyCode::Esc => self.exit = true,
-                        _ => window.handle_key_event(key_event),
+            match event::poll(Duration::from_millis(0)) {
+                Ok(true) => {
+                    if let Event::Key(key_event) = event::read()? {
+                        if let KeyEventKind::Press | KeyEventKind::Repeat = key_event.kind {
+                            match key_event.code {
+                                KeyCode::Esc => self.exit = true,
+                                _ => window.handle_key_event(key_event),
+                            }
+                        }
                     }
                 }
+                _ => {}
             }
         }
         Ok(())
