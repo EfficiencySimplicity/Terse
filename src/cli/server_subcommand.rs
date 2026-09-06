@@ -41,7 +41,7 @@ impl ServerSubcommand {
             }
             Self::Login { email, password } => {
                 let mut server_list = SERVER_LIST.lock();
-                let server = server_list.selected()?;
+                let server = server_list.get_mut_default()?;
                 let login_info = LoginInfo::new(email, password);
 
                 // THIS IS NOT TRUE

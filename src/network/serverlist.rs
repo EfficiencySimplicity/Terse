@@ -2,7 +2,8 @@ use std::fs::*;
 use std::path::PathBuf;
 use std::fmt::Write;
 
-use serde::{Serialize, Deserialize};
+use reqwest::Client;
+use serde::{self, Serialize, Deserialize};
 
 use crate::network::Server;
 use crate::data::DataStorageError;
@@ -14,19 +15,20 @@ use anyhow::Error;
 #[derive(Default, Clone, Serialize, Deserialize)]
 pub struct ServerList {
     pub servers: Vec<Server>,
-    selected: Option<usize>,
+    default: Option<usize>,
+    #[serde(skip)]
+    client: Client,
 }
 
 
 impl ServerList {
-    pub fn selected(&mut self) -> Result<&mut Server, SelectedServerError> {
+    pub fn get_mut_default(&mut self) -> Result<&mut Server, SelectedServerError> {
         // This should explicitly check for no servers...
-        self.selected.map(|x| &mut self.servers[x as usize]).ok_or(SelectedServerError::NoServers)
+        self.default.map(|x| &mut self.servers[x as usize]).ok_or(SelectedServerError::NoServers)
     }
 
-    // For when you need the selected server but ain't gonna modify it.
-    pub fn clone_selected(&self) -> Result<Server, SelectedServerError> {
-        Ok(self.selected.map(|x| self.servers[x as usize].clone()).ok_or(SelectedServerError::NoServers)?)
+    pub fn get_default(&self) -> Result<&Server, SelectedServerError> {
+        self.default.map(|x| &self.servers[x as usize]).ok_or(SelectedServerError::NoServers)
     }
 
     pub fn from_config_file(file_path: PathBuf) -> Result<ServerList, DataStorageError> {
@@ -52,14 +54,14 @@ impl ServerList {
         Ok(())
     }
 
-    pub fn add_server(&mut self, url: Url, switch: bool) -> Result<&mut Server, Error> {
+    pub fn add_server(&mut self, url: Url, switch: bool) -> Result<&Server, Error> {
 
         // Sometimes different urls redirect to the same url in the end;
         // I feel like this should be allowed, Terse should just assume
         // that redirects are two different servers. For whatever reason.
         if self.servers.iter().any(|x| {x.url() == url}) {
             Err(AddServerError::ServerAlreadyExists)?
-        }
+        };
 
         let server = Server::new(url, None);
         
@@ -68,10 +70,10 @@ impl ServerList {
         self.servers.push(server);
         // NOTE: maybe always hop onto the brand new server?
         // or maybe a flag to do so or avoid doing so
-        if self.servers.len() == 1 { self.selected = Some(0); };
+        if self.servers.len() == 1 { self.default = Some(0); };
         if switch {self.set_server(self.servers.len() - 1)?; };
 
-        return Ok(self.selected().expect("By now we should have a selected server"))
+        return Ok(self.get_default().expect("By now we should have a default server"))
     }
 
     pub fn remove_server(&mut self, url: Url) -> Result<(), Error> {
@@ -82,22 +84,22 @@ impl ServerList {
     
         self.servers.retain(|x| {x.url() != url});
 
-        if self.servers.len() == 0 { self.selected = None } else
-        if self.selected.expect("The selected element should be Some, since the length of the server list is non-zero") 
-        > self.servers.len() - 1 { self.selected = Some(self.servers.len() - 1) }
+        if self.servers.len() == 0 { self.default = None } else
+        if self.default.expect("The selected element should be Some, since the length of the server list is non-zero") 
+        > self.servers.len() - 1 { self.default = Some(self.servers.len() - 1) }
 
         Ok(())
     }
 
     // NOTE: maybe return the selected server?
-    pub fn set_server(&mut self, idx: usize) -> Result<&mut Server, Error> {
+    pub fn set_server(&mut self, idx: usize) -> Result<&Server, Error> {
         if self.servers.is_empty() {
             Err(SelectedServerError::NoServers)?
         } else if idx >= self.servers.len() {
             Err(SelectedServerError::OutOfBounds{ idx, max: self.servers.len() - 1})?
         } else {
-            self.selected = Some(idx);
-            Ok(self.selected().expect("This should point to a server, of course!"))
+            self.default = Some(idx);
+            Ok(self.get_default().expect("This should point to a server, of course!"))
         }
     }
 
@@ -107,18 +109,17 @@ impl ServerList {
         if self.servers.is_empty() {return s}
         
         writeln!(s, "Current server: {}", 
-            self.clone_selected()
+            self.get_default()
             .expect("Selected should be ok; there is at least 1 server")
             .as_string(show_passwords, true)
         ).expect("String writing should always work");
 
         for (i, server) in self.servers.iter().enumerate() {
-            writeln!(s, "{i}: {}", server.as_string(show_passwords, self.selected == Some(i))).expect("String writing should always work");
+            writeln!(s, "{i}: {}", server.as_string(show_passwords, self.default == Some(i))).expect("String writing should always work");
         }
 
         s
     }
-
 }
 
 impl std::fmt::Display for ServerList {

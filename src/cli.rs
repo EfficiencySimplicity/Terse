@@ -96,7 +96,8 @@ impl Cli {
 
     fn process_query(words: Vec<String>) -> Result<(), Error> {
         let query = words.join(" ");
-        let server = SERVER_LIST.lock().clone_selected()?;
+        let binding = SERVER_LIST.lock();
+        let server = binding.get_default()?;
         let results = server.search(query.clone())?;
 
         let mut app = App::default();
@@ -107,7 +108,8 @@ impl Cli {
     }
 
     fn process_stats() -> Result<(), Error> {
-        let server = SERVER_LIST.lock().clone_selected()?;
+        let binding = SERVER_LIST.lock();
+        let server = binding.get_default()?;
         let stats = server.get_stats()?;
         
         println!("{stats}");
@@ -115,7 +117,8 @@ impl Cli {
     }
 
     fn process_whoami() -> Result<(), Error> {
-        let maybe_server = SERVER_LIST.lock().clone_selected();
+        let binding = SERVER_LIST.lock();
+        let maybe_server = binding.get_default();
         match maybe_server {
             Ok(server) => {
                 println!("You are on {}", server.identifier_string());

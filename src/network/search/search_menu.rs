@@ -68,8 +68,8 @@ impl Window for SearchMenu {
             SearchMenuMode::Search => {
                 match key.code {
                     KeyCode::Enter => {
-                        let mut server_list = data::SERVER_LIST.lock();
-                        let server = server_list.selected().unwrap();
+                        let server_list = data::SERVER_LIST.lock();
+                        let server = server_list.get_default().unwrap();
                         let results = server.search(self.search_bar.text.clone()).unwrap();
                         self.results = SearchResults::new(results);
                         self.mode = SearchMenuMode::Results;

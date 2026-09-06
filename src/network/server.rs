@@ -1,4 +1,5 @@
-use reqwest::{StatusCode, blocking::Client};
+use std::sync::Arc;
+use reqwest::{StatusCode, Client};
 use serde::{Serialize, Deserialize};
 
 use colored::Colorize;
@@ -21,6 +22,7 @@ use crate::posts::{Post, PublishingResult};
 #[serde(from="ServerSerializer")]
 #[serde(into="ServerSerializer")]
 pub struct Server {
+    #[serde(with = "url_serde")]
     url: Url, 
     login_info: Option<LoginInfo>,
 }
@@ -176,6 +178,7 @@ pub struct ServerSerializer {
     pub login_info: Option<LoginInfo>
 }
 
+// aw shoot this cant get the client just from deserializing...
 impl From<ServerSerializer> for Server {
     fn from(value: ServerSerializer) -> Self {
         Self::new(Url::parse(&value.url).expect("Could not parse server!"), value.login_info)

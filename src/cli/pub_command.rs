@@ -15,8 +15,8 @@ use anyhow::Error;
 
 
 pub fn process(title: Option<String>, path: Option<PathBuf>) -> Result<(), Error> {
-    let mut binding = SERVER_LIST.lock();
-    let server = binding.selected()?;
+    let binding = SERVER_LIST.lock();
+    let server = binding.get_default()?;
 
     let title = match title {
         Some(s) => s,
