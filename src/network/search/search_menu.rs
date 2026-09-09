@@ -1,4 +1,3 @@
-use crate::posts::Post;
 use anyhow::Error;
 use std::sync::Arc;
 use parking_lot::RwLock;

@@ -9,9 +9,6 @@ use crate::network::LoginInfo;
 
 // RIP: use std::borrow::Borrow; I have no idea why you even existed or if I even wrote you.
 
-// https://stackoverflow.com/questions/63369629/how-can-i-split-up-a-large-impl-over-multiple-files
-
-// NOTE: In the end, this should be async so it don't block the TUI
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(from="ServerSerializer")]
 #[serde(into="ServerSerializer")]

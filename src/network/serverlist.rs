@@ -11,8 +11,8 @@ use url::Url;
 
 use anyhow::Error;
 
+// https://stackoverflow.com/questions/63369629/how-can-i-split-up-a-large-impl-over-multiple-files
 pub mod search;
-pub use search::*;
 
 pub mod login;
 pub use login::*;
