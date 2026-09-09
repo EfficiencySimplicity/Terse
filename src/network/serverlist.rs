@@ -2,7 +2,7 @@ use std::fs::*;
 use std::path::PathBuf;
 use std::fmt::Write;
 
-use reqwest::Client;
+use reqwest::blocking::Client;
 use serde::{self, Serialize, Deserialize};
 
 use crate::network::Server;
@@ -10,6 +10,18 @@ use crate::data::DataStorageError;
 use url::Url;
 
 use anyhow::Error;
+
+pub mod search;
+pub use search::*;
+
+pub mod login;
+pub use login::*;
+
+pub mod publishing;
+pub use publishing::*;
+
+pub mod info;
+pub use info::*;
 
 
 #[derive(Default, Clone, Serialize, Deserialize)]
@@ -65,7 +77,7 @@ impl ServerList {
 
         let server = Server::new(url, None);
         
-        server.exists_and_is_a_terse_server()?;
+        self.exists_and_is_a_terse_server(&server)?;
 
         self.servers.push(server);
         // NOTE: maybe always hop onto the brand new server?

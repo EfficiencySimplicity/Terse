@@ -8,9 +8,8 @@ pub mod data;
 
 fn main() {
     let cli = Cli::from_args();
-    
     match cli.process() {
-        Ok(_) => data::store_server_list(),
-        Err(e) => eprintln!("{e}")
+        Err(e) => eprintln!("{e}"),
+        _ => {}
     }
 }

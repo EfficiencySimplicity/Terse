@@ -1,3 +1,4 @@
+use anyhow::Error;
 use ratatui::widgets::{StatefulWidget, List, ListState};
 use ratatui::prelude::{Rect, Buffer, Text};
 use ratatui::style::Modifier;
@@ -22,13 +23,14 @@ impl<T> Selectable<T> where for<'a> Text<'a>: From<&'a T> {
 }
 
 impl <T> Window for &mut Selectable<T> where for<'a> Text<'a>: From<&'a T> {
-    fn handle_key_event(&mut self, key: KeyEvent) {
+    fn handle_key_event(&mut self, key: KeyEvent) -> Result<(), Error> {
         match key.code {
             // TODO: clamp after!
             KeyCode::Char('j') => self.state.scroll_down_by(1),
             KeyCode::Char('k') => self.state.scroll_up_by(1),
             _ => (),
         }
+        Ok(())
     }
 
     fn render(&mut self, area: Rect, buf: &mut Buffer) {

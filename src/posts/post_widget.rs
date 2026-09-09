@@ -3,6 +3,8 @@ use crossterm::event::{KeyCode, KeyEvent};
 use crate::tui::{Window, FramedWindow, Label};
 use super::Post;
 
+use anyhow::Error;
+
 pub struct PostWidget {
     post: Post,
     height: usize,
@@ -17,12 +19,13 @@ impl PostWidget {
 }
 
 impl Window for PostWidget {
-    fn handle_key_event(&mut self, key: KeyEvent) {
+    fn handle_key_event(&mut self, key: KeyEvent) -> Result<(), Error> {
         match key.code {
             KeyCode::Char('j') => {self.scroll_state.next()}
             KeyCode::Char('k') => {self.scroll_state.prev()}
             _ => {}
         }
+        Ok(())
     }
 
     // TODO: something with Margin? see

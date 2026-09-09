@@ -9,3 +9,5 @@
 
 - This is an idea: 
     https://docs.rs/clap-help/latest/clap_help/
+
+- mpsc seems the best bet. Maybe spsc or something to isolate and send messages.

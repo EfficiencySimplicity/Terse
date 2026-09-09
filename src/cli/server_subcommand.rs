@@ -1,7 +1,8 @@
 use super::*;
 use text_io::read;
 
-use crate::network::server::LoginOption;
+use crate::network::LoginOption;
+use crate::network::ServerList;
 
 #[derive(Subcommand)]
 pub enum ServerSubcommand {
@@ -19,29 +20,28 @@ pub enum ServerSubcommand {
 }
 
 impl ServerSubcommand {
-    pub fn process(self) -> Result<(), Error> {
+    pub fn process(self, server_list_lock: Arc<RwLock<ServerList>>) -> Result<(), Error> {
+        let mut server_list = server_list_lock.write();
+
         match self {
             Self::Add { url, stay } => {
-                SERVER_LIST.lock().add_server(url.clone(), !stay)?;
+                server_list.add_server(url.clone(), !stay);
                 println!("I successfully added {url} to the list of servers!");
             }
             Self::Remove { url } => {
-                SERVER_LIST.lock().remove_server(url.clone())?;
+                server_list.remove_server(url.clone())?;
                 println!("I successfully removed {} from the list of servers", url);
             }
             Self::Set { idx } => {
-                let mut server_list = SERVER_LIST.lock();
                 let server = server_list.set_server(idx)?;
                 // If this wanted more stats... I'd just not globally error;
                 // I'd say "I successfully set the server to 4: [couldn't get name]""
-                println!("I successfully set the server to {idx}: {}", server.identifier_string());
+                println!("I successfully set the server to {idx}: {}", server);
             }
             Self::List { show_passwords } => {
-                println!("{}", SERVER_LIST.lock().as_string(show_passwords));
+                println!("{}", server_list.as_string(show_passwords));
             }
             Self::Login { email, password } => {
-                let mut server_list = SERVER_LIST.lock();
-                let server = server_list.get_mut_default()?;
                 let login_info = LoginInfo::new(email, password);
 
                 // THIS IS NOT TRUE
@@ -58,13 +58,13 @@ impl ServerSubcommand {
                 // doing a quick check first to the server to ask, 'hey, did we do it right?'
                 // and so on.
 
-                match server.request_login(&login_info)? {
+                match server_list.request_login(server_list.get_default()?, &login_info)? {
                     LoginOption::PleaseVerify => {
                         println!("The server hasn't seen that email before, so you'll need to verify it.");
                         println!("It should have sent a code to your inbox; please enter it here:");
                         let code: String = read!("{}\n");
 
-                        if !server.verify_user(&login_info, &code)? {
+                        if !server_list.verify_user(server_list.get_default()?, &login_info, &code)? {
                             println!("The code was incorrect, please try again.");
                             return Ok(())
                         }
@@ -75,8 +75,8 @@ impl ServerSubcommand {
                     _ => {}
                 }
 
-                server.set_login_info(login_info.clone());
-                println!("I successfully signed you into {} as {}", server.identifier_string(), &login_info.email);
+                server_list.get_mut_default()?.set_login_info(login_info.clone());
+                println!("I successfully signed you into {} as {}", server_list.get_default()?, &login_info.email);
             }
         }
         Ok(())

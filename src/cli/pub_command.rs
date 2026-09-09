@@ -1,4 +1,6 @@
-use crate::data::SERVER_LIST;
+use parking_lot::RwLock;
+use std::sync::Arc;
+use crate::network::ServerList;
 use crate::posts::Post;
 
 use std::{
@@ -14,9 +16,8 @@ use capitalize::Capitalize;
 use anyhow::Error;
 
 
-pub fn process(title: Option<String>, path: Option<PathBuf>) -> Result<(), Error> {
-    let binding = SERVER_LIST.lock();
-    let server = binding.get_default()?;
+pub fn process(server_list_lock: Arc<RwLock<ServerList>>, title: Option<String>, path: Option<PathBuf>) -> Result<(), Error> {
+    let server_list = server_list_lock.read();
 
     let title = match title {
         Some(s) => s,
@@ -42,7 +43,7 @@ pub fn process(title: Option<String>, path: Option<PathBuf>) -> Result<(), Error
 
     let post = Post {title: title.clone(), content: content};
 
-    let message = server.publish(post)?;
+    let message = server_list.publish(server_list.get_default()?, post)?;
 
     println!("{message}");
     Ok(())

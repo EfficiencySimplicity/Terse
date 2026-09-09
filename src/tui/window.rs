@@ -1,14 +1,18 @@
+use ratatui::text::Line;
 use ratatui::layout::{Offset, Size};
 use ratatui::text::Text;
-use crate::tui::{self, App};
+use crate::tui;
 
 use ratatui::prelude::{Widget, Buffer, Rect};
 use ratatui::widgets::Block;
 use ratatui::style::{Style, Stylize};
 use crossterm::event::KeyEvent;
 
+use anyhow::Error;
+
 pub trait Window {
-    fn handle_key_event(&mut self, key: KeyEvent);
+    fn handle_key_event(&mut self, key: KeyEvent) -> Result<(), Error> {Ok(())}
+    fn update(&mut self) -> Result<(), Error> {Ok(())}
     fn render(&mut self, area: Rect, buf: &mut Buffer);
 }
 
@@ -34,3 +38,53 @@ pub trait FramedWindow: Window {
 
     fn get_labels() -> Vec<String> {vec![]}
 }
+
+impl<T> Window for Option<T> where T: Window {
+    fn render(&mut self, area: Rect, buf: &mut Buffer) {
+        match self {
+            Some(x) => x.render(area, buf),
+            _ => {}
+        }
+    }
+
+    fn handle_key_event(&mut self, key: KeyEvent) -> Result<(), Error> {
+        match self {
+            Some(x) => x.handle_key_event(key),
+            _ => Ok(())
+        }
+    }
+
+    fn update(&mut self) -> Result<(), Error> {
+        match self {
+            Some(x) => x.update(),
+            _ => Ok(())
+        }
+    }
+}
+
+impl<T> FramedWindow for Option<T> where T: Window {}
+
+impl<T> Window for Result<T, anyhow::Error> where T: Window {
+    fn render(&mut self, area: Rect, buf: &mut Buffer) {
+        match self {
+            Ok(x) => x.render(area, buf),
+            Err(e) => {Line::from(format!("(!) There was an error: {} (!)", e)).centered().red().render(area, buf)}
+        }
+    }
+
+    fn handle_key_event(&mut self, key: KeyEvent) -> Result<(), Error> {
+        match self {
+            Ok(x) => x.handle_key_event(key),
+            _ => Ok(())
+        }
+    }
+
+    fn update(&mut self) -> Result<(), Error> {
+        match self {
+            Ok(x) => x.update(),
+            _ => Ok(())
+        }
+    }
+}
+
+impl<T> FramedWindow for Result<T, anyhow::Error> where T: Window {}

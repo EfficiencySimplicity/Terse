@@ -1,5 +1,9 @@
+use crate::posts::Post;
+use anyhow::Error;
+use std::sync::Arc;
+use parking_lot::RwLock;
 use ratatui::layout::{ Layout, Direction, Constraint };
-use crate::{data, tui::{self, App, FramedWindow, Label, Window}};
+use crate::{network::ServerList, tui::{self, FramedWindow, Label, Window}};
 use super::{SearchResults, SearchBar};
 use crate::posts::PostWidget;
 
@@ -21,64 +25,65 @@ pub struct SearchMenu {
     results: SearchResults,
     search_bar: SearchBar,
     mode: SearchMenuMode,
+    server_list: Arc<RwLock<ServerList>>
 }
 
 // TODO: it should *create* a search menu and prompt *it* to search...
 impl SearchMenu {
-    pub fn new(query: String, results: SearchResults) -> Self {
-        Self {results, search_bar: SearchBar::new(query), mode: SearchMenuMode::Results}
+    pub fn new(query: String, results: SearchResults, server_list: Arc<RwLock<ServerList>>) -> Self {
+        Self {results, search_bar: SearchBar::new(query), mode: SearchMenuMode::Results, server_list}
     }
 }
 
 
 impl Window for SearchMenu {
-    fn handle_key_event(&mut self, key: KeyEvent) {
+    fn handle_key_event(&mut self, key: KeyEvent) -> Result<(), Error> {
         match &self.mode {
             SearchMenuMode::Results | SearchMenuMode::Answer(_) => {
                 if let KeyCode::Char('k') = key.code && key.modifiers.contains(KeyModifiers::CONTROL) {
                     self.mode = SearchMenuMode::Search;
-                    return
+                    return Ok(())
                 }
             }
             SearchMenuMode::Search => {
                 if let KeyCode::Char('j') = key.code && key.modifiers.contains(KeyModifiers::CONTROL) {
                     self.mode = SearchMenuMode::Results;
-                    return
+                    return Ok(())
                 }
             }
         }
 
         match &mut self.mode {
             SearchMenuMode::Results => {
-                match key.code {
-                    KeyCode::Enter => {
-                        self.mode = SearchMenuMode::Answer(PostWidget::new(self.results.get_selected_article()));
-                    }
-                    _ => (&mut self.results).handle_key_event(key)
-                };
+                if let KeyCode::Enter = key.code {
+                    self.mode = SearchMenuMode::Answer(PostWidget::new(self.results.get_selected_article()));
+                } else {
+                    self.results.handle_key_event(key)?
+                }
             }
             SearchMenuMode::Answer(post_widget) => {
                 match key.code {
                     KeyCode::Char('b') => {
                         self.mode = SearchMenuMode::Results;
                     }
-                    _ => post_widget.handle_key_event(key),
+                    _ => post_widget.handle_key_event(key)?,
                 }
             }
             SearchMenuMode::Search => {
                 match key.code {
                     KeyCode::Enter => {
-                        let server_list = data::SERVER_LIST.lock();
-                        let server = server_list.get_default().unwrap();
-                        let results = server.search(self.search_bar.text.clone()).unwrap();
-                        self.results = SearchResults::new(results);
-                        self.mode = SearchMenuMode::Results;
+                        let server_list = self.server_list.read();
+                        let results = server_list.search(server_list.get_default()?, self.search_bar.text.clone())?;
+                        self.results = SearchResults::new(results, self.server_list.clone());
+                        self.mode = SearchMenuMode::Results
                     }
                     _ => {}
                 }
-                self.search_bar.handle_key_event(key);
+                self.search_bar.handle_key_event(key)?;
             }
-        }
+        };
+
+        Ok(())
     }
 
     fn render(&mut self, area: Rect, buf: &mut Buffer) {

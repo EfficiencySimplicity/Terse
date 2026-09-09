@@ -1,4 +1,5 @@
-use crate::data::SERVER_LIST;
+use parking_lot::RwLock;
+use std::sync::Arc;
 use clap::{Parser, Subcommand};
 use anyhow::Error;
 
@@ -76,52 +77,69 @@ impl Cli {
     }
 
 
+    pub fn get_server_list() -> Result<(PathBuf, Arc<RwLock<ServerList>>), DataStorageError> {
+        // https://users.rust-lang.org/t/tuple-of-results-into-a-result-of-tuples/120191/2
+        let server_file = data::ensure_config_file(data::get_config_dir()?.join("servers.json"))?;
+        Ok((server_file.clone(), Arc::new(RwLock::new(ServerList::from_config_file(server_file.clone())?))))
+    }
+
     pub fn process(self) -> Result<(), Error> {
         // Having this here does mean that some commands that don't need
         // disk access at all could fail, but it is WORTH IT.
         // Besides, if you can't read the config file that's enough of an 
         // issue to stop doing anything.
 
+        let (server_file, server_list) = match Self::get_server_list() {
+            Ok(s) => s,
+            Err(e) => {
+                return Err(Error::msg(format!("I had a problem reading from disk: {e}")))
+            }
+        };
+
         match self {
-            Cli::Search {query}    => Self::process_query(query),
-            Cli::Stats             => Self::process_stats(),
-            Cli::Pub {title, path} => pub_command::process(title, path),
-            Cli::Server(command)   => command.process(),
-            Cli::Whoami            => Self::process_whoami(),
+            Cli::Search {query}    => Self::process_query(query, server_list.clone()),
+            Cli::Stats             => Self::process_stats(server_list.clone()),
+            Cli::Pub {title, path} => pub_command::process(server_list.clone(), title, path),
+            Cli::Server(command)   => command.process(server_list.clone()),
+            Cli::Whoami            => Self::process_whoami(server_list.clone()),
 
             #[cfg(debug_assertions)]
             Cli::Dev(command)      => command.process(),
+        }?;
+
+        if let Err(e) = server_list.read().store(server_file) {
+            return Err(Error::msg(format!("I got an error when trying to write to disk: \n{e}")))
         }
+
+        Ok(())
     }
 
-    fn process_query(words: Vec<String>) -> Result<(), Error> {
+    fn process_query(words: Vec<String>, server_list_lock: Arc<RwLock<ServerList>>) -> Result<(), Error> {
+        let server_list = server_list_lock.read();
+
         let query = words.join(" ");
-        let binding = SERVER_LIST.lock();
-        let server = binding.get_default()?;
-        let results = server.search(query.clone())?;
+        let results = server_list.search(server_list.get_default()?, query.clone())?;
 
         let mut app = App::default();
-        let mut search_menu = SearchMenu::new(query, SearchResults::new(results));
+        let mut search_menu = SearchMenu::new(query, SearchResults::new(results, server_list_lock.clone()), server_list_lock.clone());
 
         app.run(&mut search_menu)?;
         Ok(())
     }
 
-    fn process_stats() -> Result<(), Error> {
-        let binding = SERVER_LIST.lock();
-        let server = binding.get_default()?;
-        let stats = server.get_stats()?;
+    fn process_stats(server_list_lock: Arc<RwLock<ServerList>>) -> Result<(), Error> {
+        let server_list = server_list_lock.read();
+
+        let stats = server_list.get_stats(server_list.get_default()?)?;
         
         println!("{stats}");
         Ok(())
     }
 
-    fn process_whoami() -> Result<(), Error> {
-        let binding = SERVER_LIST.lock();
-        let maybe_server = binding.get_default();
-        match maybe_server {
+    fn process_whoami(server_list_lock: Arc<RwLock<ServerList>>) -> Result<(), Error> {
+        match server_list_lock.read().get_default() {
             Ok(server) => {
-                println!("You are on {}", server.identifier_string());
+                println!("You are on {}", server);
                 println!("TODO: have the server store the current login info");
             },
             Err(_) => {

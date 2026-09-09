@@ -49,13 +49,14 @@ impl App {
                         if let KeyEventKind::Press | KeyEventKind::Repeat = key_event.kind {
                             match key_event.code {
                                 KeyCode::Esc => self.exit = true,
-                                _ => window.handle_key_event(key_event),
+                                _ => _ = window.handle_key_event(key_event),
                             }
                         }
                     }
                 }
                 _ => {}
             }
+            let _  = window.update();
         }
         Ok(())
     }

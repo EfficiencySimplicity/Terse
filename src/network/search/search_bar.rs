@@ -1,5 +1,6 @@
+use anyhow::Error;
 use ratatui::text::Line;
-use crate::tui::{FramedWindow, Window, App};
+use crate::tui::{FramedWindow, Window};
 
 use ratatui::{
     buffer::Buffer,
@@ -20,7 +21,7 @@ impl SearchBar {
 }
 
 impl Window for SearchBar {
-	fn handle_key_event(&mut self, key: KeyEvent) {
+	fn handle_key_event(&mut self, key: KeyEvent) -> Result<(), Error> {
 		match key.code {
             KeyCode::Char(c) => {
                 self.text.push(c);
@@ -30,6 +31,7 @@ impl Window for SearchBar {
             }
             _ => {}
         }
+        Ok(())
 	}
 
 	fn render(&mut self, area: Rect, buf: &mut Buffer) {
